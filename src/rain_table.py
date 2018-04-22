@@ -164,7 +164,7 @@ area_threshold_list = np.concatenate((np.zeros(1),np.logspace(0,np.log10(np.max(
 #setup direction array
 direction = np.zeros((res_width,res_height,8),dtype=int)
 for i in np.arange(0,8):
-        direction[:,:,i][np.transpose(DIR)==i] = 1
+    direction[:,:,i][np.transpose(DIR)==i] = 1
 
 #coordinate array
 coordinates = np.zeros((res_width,res_height,2))
