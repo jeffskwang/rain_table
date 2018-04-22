@@ -36,22 +36,23 @@ alpha = 0.1
 #this path
 this_dir = os.path.dirname(__file__)
 this_path = os.path.join(this_dir,'')
+priv_path = os.path.abspath(os.path.join(this_path, os.pardir, 'private'))
 
 #load dem
-DEM = np.loadtxt(os.path.join(this_path, 'dem.txt'),skiprows=6)
+DEM = np.loadtxt(os.path.join(priv_path, 'dem.txt'),skiprows=6)
 res_height,res_width = DEM.shape
 min_ele = np.min(DEM[DEM!=-9999])
 max_ele = np.max(DEM)
 DEM[DEM==-9999] = min_ele
 
 #load drainage area
-AREA = np.loadtxt(os.path.join(this_path, 'area.txt'),skiprows=6)
+AREA = np.loadtxt(os.path.join(priv_path, 'area.txt'),skiprows=6)
 
 #0|1|2
 #3|x|4
 #5|6|7
 #load direction, covert the arcgis direction values to values between 0 and 7
-DIR = np.loadtxt('DIR.txt',dtype = int, skiprows=6)
+DIR = np.loadtxt(os.path.join(priv_path, 'dir.txt'),dtype = int, skiprows=6)
 DIR[DIR==8] = 5
 DIR[DIR==4] = 6
 DIR[DIR==2] = 7
@@ -135,11 +136,11 @@ DEM_transparency_list = np.linspace(0,255,9)
 y_hydro, x_hydro = np.unravel_index(AREA.argmax(), AREA.shape)
 
 #aerial photo
-aerial_surface = pygame.image.load('aerial.png')
+aerial_surface = pygame.image.load(os.path.join(priv_path, 'aerial.png'))
 aerial_surface_scaled  = pygame.transform.scale(aerial_surface,(int(res_width * scale),int(res_height * scale)))
 
 #contols
-controls_surface = pygame.image.load('rain_table_controls.png')
+controls_surface = pygame.image.load(os.path.join(priv_path, 'rain_table_controls.png'))
 controls_surface_scaled  = pygame.transform.scale(controls_surface,(int(res_height * scale * 0.5),int(res_height * scale * 0.5)))
 gameDisplay.blit(controls_surface_scaled,(res_width*scale - int(res_height*scale * 0.5),res_height*scale))
 
@@ -162,13 +163,13 @@ area_threshold_list = np.concatenate((np.zeros(1),np.logspace(0,np.log10(np.max(
 
 #setup direction array
 direction = np.zeros((res_width,res_height,8),dtype=int)
-for i in xrange(0,8):
-    direction[:,:,i][np.transpose(DIR)==i] = 1
+for i in np.arange(0,8):
+        direction[:,:,i][np.transpose(DIR)==i] = 1
 
 #coordinate array
 coordinates = np.zeros((res_width,res_height,2))
-for x_temp in xrange(0,res_width):
-    for y_temp in xrange(0,res_height):
+for x_temp in np.arange(0,res_width):
+    for y_temp in np.arange(0,res_height):
         coordinates[x_temp,y_temp,0] = x_temp * scale
         coordinates[x_temp,y_temp,1] = y_temp * scale
 
