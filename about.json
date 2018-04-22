@@ -1,0 +1,15 @@
+{
+    "title": "Rainfall routing through a drainage basin",
+    "author": "Jeffrey Kwang",
+    "version": "2.0",
+    "shortdesc": "Determine where rain falls, and watch as it is routed through a drainage basin",
+    "difficulty": 4,
+    "license": "MIT",
+    "projurl": "[hosted on GitHub](https://github.com/jeffskwang/rain_table)",
+    "projreadme": ["README.md"],
+    "exec": ["src", "rain_table.py"],
+    "docloc": ["doc"],
+    "doclist": {
+    	"empty.txt": "A blank textfile"
+    }
+}

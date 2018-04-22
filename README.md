@@ -1,13 +1,42 @@
 # rain_table
+
 Interactive rain table model written by Jeffrey Kwang at UIUC.
 
-This repository contains 3 files. In order to run the model ('rain_table.py'), python 2.7 needs to be installed along with the library pygame (https://www.pygame.org).
+
+## Installing
+
+This repository contains 3 files. In order to run the model (`rain_table.py`), python 2.7 needs to be installed along with the library pygame (https://www.pygame.org).
 
 For example, Python 2.7 can be installed with the anaconda pacakge (https://www.anaconda.com/download/) or Python(x,y) (https://python-xy.github.io/downloads.html). 
 
-After python is installed, pygame can be installed via the cmd prompt or linux terminal. Use 'pip install pygame'.
+Note that the model has been tested with Python 3 and runs, but is only rigorously tested with Python 2.7.
 
-The list of the files
+After python is installed, `pygame` can be installed via the cmd prompt or linux terminal. Use `pip install pygame`.
+
+You can download this entire repository as a `.zip` by clicking the "Clone or download button on this page", or by [clicking here](https://github.com/jeffskwang/rain_table/archive/master.zip) to get a `.zip` folder. Unzip the folder in your preferred location.
+
+If you have installed `git` and are comfortable working with it, you can simply clone the repository to your preferred location.
+
+```
+https://github.com/jeffskwang/rain_table.git
+```
+
+
+## Running
+
+To run the model, you can use:
+```
+python <path-to-repository>/run_rain_table.py
+```
+
+or to run with Python3
+
+```
+python3 <path-to-repository>/run_rain_table.py --python3
+```
+
+
+## The list of the files
 
 (1) rain_table.py: This file contains the source code to run the rain table simulation. Simply run the model in python, and click the screen to drop rain on the screen. The rain will be routed on the landscape in accordance to the d8, steepest decent algorithm (see O’Callaghan and Mark, 1984).
 
@@ -22,6 +51,6 @@ rad -> this parameter controls the pixel radius of the rain cloud
 
 f_rate -> this parameter controls the frame rate of the simulation. It is set to 60 as the default because most computer screens' refresh rates are 60 Hz.
 
-References
+## References
 
 O’Callaghan, J. F. and Mark, D. M.: The extraction of drainage networks from digital elevation data, Computer Vision, Graphics, and Image Processing, 28(3), 323–344, doi:10.1016/S0734-189X(84)80011-0, 1984.
