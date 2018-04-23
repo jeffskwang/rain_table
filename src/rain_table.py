@@ -278,13 +278,9 @@ while not gameExit:
     
     prev_array[:,:,:] = 0
     if pygame.mouse.get_pressed()[2]:
-        # prev_array[:,:,0][(coordinates[:,:,0] - x_mouse) ** 2.0 + (coordinates[:,:,1] - y_mouse) ** 2.0 < rad ** 2.0] = ((1. - alpha) * prev_array[:,:,0][(coordinates[:,:,0] - x_mouse) ** 2.0 + (coordinates[:,:,1] - y_mouse) ** 2.0 < rad ** 2.0]) + (0.5 * 0.0)
-        # prev_array[:,:,1][(coordinates[:,:,0] - x_mouse) ** 2.0 + (coordinates[:,:,1] - y_mouse) ** 2.0 < rad ** 2.0] = ((1. - alpha) * prev_array[:,:,1][(coordinates[:,:,0] - x_mouse) ** 2.0 + (coordinates[:,:,1] - y_mouse) ** 2.0 < rad ** 2.0]) + (0.5 * 0.0)
-        # prev_array[:,:,2][(coordinates[:,:,0] - x_mouse) ** 2.0 + (coordinates[:,:,1] - y_mouse) ** 2.0 < rad ** 2.0] = ((1. - alpha) * prev_array[:,:,2][(coordinates[:,:,0] - x_mouse) ** 2.0 + (coordinates[:,:,1] - y_mouse) ** 2.0 < rad ** 2.0]) + (0.5 * 0.0)
         prev_array[:,:,0][(coordinates[:,:,0] - x_mouse) ** 2.0 + (coordinates[:,:,1] - y_mouse) ** 2.0 < rad ** 2.0] = 150
         prev_array[:,:,1][(coordinates[:,:,0] - x_mouse) ** 2.0 + (coordinates[:,:,1] - y_mouse) ** 2.0 < rad ** 2.0] = 150
         prev_array[:,:,2][(coordinates[:,:,0] - x_mouse) ** 2.0 + (coordinates[:,:,1] - y_mouse) ** 2.0 < rad ** 2.0] = 255
-        # prev_array[:,:,3][(coordinates[:,:,0] - x_mouse) ** 2.0 + (coordinates[:,:,1] - y_mouse) ** 2.0 < rad ** 2.0] = 150
 
     #HYDROGRAPH
     frame_number +=1
