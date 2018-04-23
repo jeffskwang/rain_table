@@ -270,6 +270,7 @@ while not gameExit:
     game_display_array[:,:,1] = (np.transpose(DEM) - min_ele) / (max_ele - min_ele) * 255
     game_display_array[:,:,2] = (np.transpose(DEM) - min_ele) / (max_ele - min_ele) * 255
     
+    game_display_arrayA[:,:,:] = 0
     game_display_arrayA[:,:,0][AREA_new > 0] = 255 * (0.75 -  0.75 * np.log(AREA_new[AREA_new > 0]) / np.log(np.max(AREA) + 0.01))
     game_display_arrayA[:,:,1][AREA_new > 0] = 255 * (0.75 -  0.75 * np.log(AREA_new[AREA_new > 0]) / np.log(np.max(AREA) + 0.01))
     game_display_arrayA[:,:,2][AREA_new > 0] = 255
@@ -294,20 +295,17 @@ while not gameExit:
     surface_scaled = pygame.transform.scale(array_to_surface,(res_width * scale,int(res_height * scale)))
     gameDisplay.blit(surface_scaled,(0,0))
 
-    aerial_surface_scaled.set_alpha(DEM_transparency_list[DEM_transparency_int - 1])
-    aerial_surface_scaled.set_alpha(0)
+    alpha = DEM_transparency_list[DEM_transparency_int - 1]
+    alpha = 255
+    aerial_surface_scaled.fill((255, 255, 255, alpha), None, pygame.BLEND_RGBA_MULT)
     gameDisplay.blit(aerial_surface_scaled,(0,0))
-
 
     arrayA_to_surfaceA = pygame.surfarray.make_surface(game_display_arrayA)
     surfaceA_scaled = pygame.transform.scale(arrayA_to_surfaceA,(res_width * scale,int(res_height * scale)))
     surfaceA_scaled.set_colorkey((0,0,0))
     gameDisplay.blit(surfaceA_scaled,(0,0))
-    # surfaceA_scaled.set_alpha(0)
-    
 
     #update area array
-    AREA_new[AREA_new < 1] = 0
     AREA_old[:,:] = AREA_new[:,:]
     AREA_new[:,:] = 0
     
