@@ -149,6 +149,7 @@ gameDisplay.blit(controls_surface_scaled,(res_width*scale - int(res_height*scale
 ############################
 DEM_array = np.zeros((res_width,res_height,3),dtype=int)
 flow_array = np.zeros((res_width,res_height,3),dtype=int)
+prev_array = np.zeros((res_width,res_height,3),dtype=int)
 AREA_old = np.zeros((res_width,res_height),dtype=int)
 AREA_new = np.zeros((res_width,res_height),dtype=int)
 
@@ -174,7 +175,7 @@ for x_temp in np.arange(0,res_width):
         coordinates[x_temp,y_temp,0] = x_temp * scale
         coordinates[x_temp,y_temp,1] = y_temp * scale
 
-# DEM array
+#DEM array
 DEM_array[:,:,0] = (np.transpose(DEM) - min_ele) / (max_ele - min_ele) * 255
 DEM_array[:,:,1] = (np.transpose(DEM) - min_ele) / (max_ele - min_ele) * 255
 DEM_array[:,:,2] = (np.transpose(DEM) - min_ele) / (max_ele - min_ele) * 255
@@ -275,10 +276,15 @@ while not gameExit:
     flow_array[:,:,1][AREA_new > 0] = 255 * (0.75 -  0.75 * np.log(AREA_new[AREA_new > 0]) / np.log(np.max(AREA) + 0.01))
     flow_array[:,:,2][AREA_new > 0] = 255
     
+    prev_array[:,:,:] = 0
     if pygame.mouse.get_pressed()[2]:
-        flow_array[:,:,0][(coordinates[:,:,0] - x_mouse) ** 2.0 + (coordinates[:,:,1] - y_mouse) ** 2.0 < rad ** 2.0] = ((1. - alpha) * flow_array[:,:,0][(coordinates[:,:,0] - x_mouse) ** 2.0 + (coordinates[:,:,1] - y_mouse) ** 2.0 < rad ** 2.0]) + (0.5 * 0.0)
-        flow_array[:,:,1][(coordinates[:,:,0] - x_mouse) ** 2.0 + (coordinates[:,:,1] - y_mouse) ** 2.0 < rad ** 2.0] = ((1. - alpha) * flow_array[:,:,1][(coordinates[:,:,0] - x_mouse) ** 2.0 + (coordinates[:,:,1] - y_mouse) ** 2.0 < rad ** 2.0]) + (0.5 * 0.0)
-        flow_array[:,:,2][(coordinates[:,:,0] - x_mouse) ** 2.0 + (coordinates[:,:,1] - y_mouse) ** 2.0 < rad ** 2.0] = ((1. - alpha) * flow_array[:,:,2][(coordinates[:,:,0] - x_mouse) ** 2.0 + (coordinates[:,:,1] - y_mouse) ** 2.0 < rad ** 2.0]) + (0.5 * 0.0)
+        # prev_array[:,:,0][(coordinates[:,:,0] - x_mouse) ** 2.0 + (coordinates[:,:,1] - y_mouse) ** 2.0 < rad ** 2.0] = ((1. - alpha) * prev_array[:,:,0][(coordinates[:,:,0] - x_mouse) ** 2.0 + (coordinates[:,:,1] - y_mouse) ** 2.0 < rad ** 2.0]) + (0.5 * 0.0)
+        # prev_array[:,:,1][(coordinates[:,:,0] - x_mouse) ** 2.0 + (coordinates[:,:,1] - y_mouse) ** 2.0 < rad ** 2.0] = ((1. - alpha) * prev_array[:,:,1][(coordinates[:,:,0] - x_mouse) ** 2.0 + (coordinates[:,:,1] - y_mouse) ** 2.0 < rad ** 2.0]) + (0.5 * 0.0)
+        # prev_array[:,:,2][(coordinates[:,:,0] - x_mouse) ** 2.0 + (coordinates[:,:,1] - y_mouse) ** 2.0 < rad ** 2.0] = ((1. - alpha) * prev_array[:,:,2][(coordinates[:,:,0] - x_mouse) ** 2.0 + (coordinates[:,:,1] - y_mouse) ** 2.0 < rad ** 2.0]) + (0.5 * 0.0)
+        prev_array[:,:,0][(coordinates[:,:,0] - x_mouse) ** 2.0 + (coordinates[:,:,1] - y_mouse) ** 2.0 < rad ** 2.0] = 150
+        prev_array[:,:,1][(coordinates[:,:,0] - x_mouse) ** 2.0 + (coordinates[:,:,1] - y_mouse) ** 2.0 < rad ** 2.0] = 150
+        prev_array[:,:,2][(coordinates[:,:,0] - x_mouse) ** 2.0 + (coordinates[:,:,1] - y_mouse) ** 2.0 < rad ** 2.0] = 255
+        # prev_array[:,:,3][(coordinates[:,:,0] - x_mouse) ** 2.0 + (coordinates[:,:,1] - y_mouse) ** 2.0 < rad ** 2.0] = 150
 
     #HYDROGRAPH
     frame_number +=1
@@ -291,18 +297,27 @@ while not gameExit:
         gameDisplay.blit(plot_to_surface,(0,res_height*scale))
                                           
     #DEM surface
-    array_to_surface = pygame.surfarray.make_surface(DEM_array)
-    surface_scaled = pygame.transform.scale(array_to_surface,(res_width * scale,int(res_height * scale)))
-    gameDisplay.blit(surface_scaled,(0,0))
+    DEM_surface = pygame.surfarray.make_surface(DEM_array)
+    DEM_surface_scaled = pygame.transform.scale(DEM_surface,(res_width * scale,int(res_height * scale)))
+    gameDisplay.blit(DEM_surface_scaled,(0,0))
 
-    alpha = transparency_list[transparency_int - 1]
-    aerial_surface_scaled.set_alpha(alpha)
+    #aerial surface
+    aerial_alpha = transparency_list[transparency_int - 1]
+    aerial_surface_scaled.set_alpha(aerial_alpha)
     gameDisplay.blit(aerial_surface_scaled,(0,0))
 
+    # flow surface
     flow_surface = pygame.surfarray.make_surface(flow_array)
-    surfaceA_scaled = pygame.transform.scale(flow_surface,(res_width * scale,int(res_height * scale)))
-    surfaceA_scaled.set_colorkey((0,0,0))
-    gameDisplay.blit(surfaceA_scaled,(0,0))
+    flow_surface_scaled = pygame.transform.scale(flow_surface,(res_width * scale,int(res_height * scale)))
+    flow_surface_scaled.set_colorkey((0,0,0))
+    gameDisplay.blit(flow_surface_scaled,(0,0))
+
+    # preview surface
+    prev_surface = pygame.surfarray.make_surface(prev_array)
+    prev_surface_scaled = pygame.transform.scale(prev_surface,(res_width * scale,int(res_height * scale)))
+    prev_surface_scaled.set_alpha(100)
+    prev_surface_scaled.set_colorkey((0,0,0))
+    gameDisplay.blit(prev_surface_scaled,(0,0))
 
     #update area array
     AREA_old[:,:] = AREA_new[:,:]
