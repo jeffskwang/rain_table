@@ -288,7 +288,7 @@ while not gameExit:
         frame_number = 0
         Q[:-1] = Q[1:]
         Q[-1] = float(AREA_new[x_hydro][y_hydro]) / float(base_flow)
-        plot_hydro = plot_setup(plot_hydro, t, Q, r'$t$ [$T$]', r'$Q/Q_b$ [$L^3/T$]', np.max(AREA)/base_flow)
+        plot_hydro = plot_setup(plot_hydro,t,Q,r'$t$ [$T$]',r'$Q/Q_b$ [$L^3/T$]',np.max(AREA)/base_flow)
         plot_to_surface = pygame.surfarray.make_surface(plot_hydro)
         gameDisplay.blit(plot_to_surface,(0,res_height*scale))
                                           
