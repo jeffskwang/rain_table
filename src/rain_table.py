@@ -15,6 +15,36 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+import events
+
+
+
+############################
+###FUNCTIONS###
+############################
+
+def plot_setup(plot_array,x,y,xlabel,ylabel,Q_max):
+    width_pixel,height_pixel = plot_array.shape[0], plot_array.shape[1]
+    fig = Figure(figsize=(float(width_pixel)/100.,float(height_pixel)/100.),dpi=100)
+    ax = fig.gca()
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.set_xlim(t[0],t[-1])
+    ax.set_ylim(0,Q_max)
+    ax.plot(x,y,color='b')
+        
+    fig.tight_layout()
+    canvas = FigureCanvas(fig)
+
+    canvas.draw()
+    
+    buf = fig.canvas.tostring_rgb()
+    ncols,nrows = fig.canvas.get_width_height()
+    buf = np.fromstring(buf, dtype=np.uint8).reshape(nrows, ncols, 3)
+
+    return np.transpose(buf,(1, 0, 2))
+
+
 
 
 
@@ -32,10 +62,13 @@ class GUI(object):
         
         # setup the figure
         plt.rcParams['toolbar'] = 'None'
-        plt.rcParams['figure.figsize'] = 8, 6
+        plt.rcParams['figure.figsize'] = 4, 12
         self.fig, self.map_ax = plt.subplots()
+        plt.subplots_adjust(left=0, bottom=0, top=1)
         self.fig.canvas.set_window_title('SedEdu -- drainage basin simulation')
-        # plt.subplots_adjust(left=0.085, bottom=0.1, top=0.95, right=0.5)
+        self.map_ax.get_xaxis().set_visible(False)
+        self.map_ax.get_yaxis().set_visible(False)
+        
         # self.map_ax.set_xlabel("channel belt (km)")
         # self.map_ax.set_ylabel("stratigraphy (m)")
         # plt.ylim(-config.yView, 0.1*config.yView)
@@ -58,7 +91,17 @@ class GUI(object):
 
 
 class Map(object):
-    def __init__(self):
+    def __init__(self, gui):
+
+        # add_ax
+        self.gui = gui
+        self.fig = self.gui.fig
+        self.map_ax = self.gui.map_ax
+        
+
+        self._rclicked = False
+        self._lclicked = False
+
         ############################
         ###PARAMETERS###
         ############################
@@ -84,7 +127,8 @@ class Map(object):
         self.priv_path = os.path.abspath(os.path.join(self.this_path, os.pardir, 'private'))
 
         #load dem
-        self.DEM = np.loadtxt(os.path.join(self.priv_path, 'dem.txt'),skiprows=6)
+        _DEM = np.loadtxt(os.path.join(self.priv_path, 'dem.txt'),skiprows=6)
+        self.DEM = _DEM
         self.res_height,self.res_width = self.DEM.shape
         self.min_ele = np.min(self.DEM[self.DEM!=-9999])
         self.max_ele = np.max(self.DEM)
@@ -112,7 +156,7 @@ class Map(object):
         ############################
         #intialize parameters
         #background streams on/off
-        self.toggle_stream = True
+        self._toggle_stream = False
 
         #key press down/up
         self.key_down = 0
@@ -147,7 +191,7 @@ class Map(object):
         ############################
         self.DEM_array = np.zeros((self.res_width,self.res_height,3),dtype=int)
         self.flow_array = np.zeros((self.res_width,self.res_height,4),dtype=int)
-        self.prev_array = np.zeros((self.res_width,self.res_height,3),dtype=int)
+        self.prev_array = np.zeros((self.res_width,self.res_height,4),dtype=int)
         self.AREA_old = np.zeros((self.res_width,self.res_height),dtype=int)
         self.AREA_new = np.zeros((self.res_width,self.res_height),dtype=int)
 
@@ -181,28 +225,52 @@ class Map(object):
         self.area_threshold = self.area_threshold_list[self.area_threshold_index]
 
 
-        #DEM surface
-        self.DEM_surface = plt.imshow(self.DEM_array)
-        # self.DEM_surface_scaled = pygame.transform.scale(DEM_surface,(res_width * scale,int(res_height * scale)))
-        # gameDisplay.blit(DEM_surface_scaled,(0,0))
+        #DEM surface artists for plotting
+        self.DEM_surface = self.map_ax.imshow(self.DEM_array) # , origin="lower"
+        self.flow_surface = self.map_ax.imshow(self.flow_array)
+        self.prev_surface = self.map_ax.imshow(self.prev_array)
+
+
+        # connect press events
+        mouseon_cid = self.fig.canvas.mpl_connect('button_press_event', lambda e: events.on_click(e, self))
+        mouseoff_cid = self.fig.canvas.mpl_connect('button_release_event', lambda e: events.off_click(e, self))
+        mousemv_cid = self.fig.canvas.mpl_connect('motion_notify_event', lambda e: events.mouse_move(e, self))
         
-        self.flow_surface = plt.imshow(self.flow_array)
+        key_cid = self.fig.canvas.mpl_connect('key_press_event', lambda e: events.on_key(e, self))
+
+
+
+
 
 
     def __call__(self, i):
-            #toggle base_flow
-        if self.toggle_stream:
+
+        #toggle base_flow
+        if self._toggle_stream:
             self.AREA_old[np.transpose(self.AREA) >= self.area_threshold ] += 1
 
+        # mouse_move   
+        if self._lclicked:
+            if self._inax:
+                self.AREA_old[(self.coordinates[:,:,0] - self._mx) ** 2.0 + (self.coordinates[:,:,1] - self._my) ** 2.0 < self.rad ** 2.0] += 1
+
+        self.prev_array[:,:,:] = 0
+        if self._rclicked:
+            if self._inax:
+                self.prev_array[:,:,0][(self.coordinates[:,:,0] - self._mx) ** 2.0 + (self.coordinates[:,:,1] - self._my) ** 2.0 < self.rad ** 2.0] = 150
+                self.prev_array[:,:,1][(self.coordinates[:,:,0] - self._mx) ** 2.0 + (self.coordinates[:,:,1] - self._my) ** 2.0 < self.rad ** 2.0] = 150
+                self.prev_array[:,:,2][(self.coordinates[:,:,0] - self._mx) ** 2.0 + (self.coordinates[:,:,1] - self._my) ** 2.0 < self.rad ** 2.0] = 255
+                self.prev_array[:,:,3][(self.coordinates[:,:,0] - self._mx) ** 2.0 + (self.coordinates[:,:,1] - self._my) ** 2.0 < self.rad ** 2.0] = 100
+
         #ROUTE THE RAINFALL
-        self.AREA_new[:-1,:-1] += self.AREA_old[1:,1:] * self.direction[1:,1:,0]
-        self.AREA_new[:,:-1] += self.AREA_old[:,1:] * self.direction[:,1:,1]
-        self.AREA_new[1:,:-1] += self.AREA_old[:-1,1:] * self.direction[:-1,1:,2]
-        self.AREA_new[:-1,:] += self.AREA_old[1:,:] * self.direction[1:,:,3]
-        self.AREA_new[1:,:] += self.AREA_old[:-1,:] * self.direction[:-1,:,4]
-        self.AREA_new[:-1,1:] += self.AREA_old[1:,:-1] * self.direction[1:,:-1,5]
-        self.AREA_new[:,1:] += self.AREA_old[:,:-1] * self.direction[:,:-1,6]
-        self.AREA_new[1:,1:] += self.AREA_old[:-1,:-1] * self.direction[:-1,:-1,7]
+        self.AREA_new[ :-1,  :-1] += self.AREA_old[1:,1:] * self.direction[1:,1:,0]
+        self.AREA_new[ :  ,  :-1] += self.AREA_old[:,1:] * self.direction[:,1:,1]
+        self.AREA_new[1:  ,  :-1] += self.AREA_old[:-1,1:] * self.direction[:-1,1:,2]
+        self.AREA_new[ :-1,  :  ] += self.AREA_old[1:,:] * self.direction[1:,:,3]
+        self.AREA_new[1:  ,  :  ] += self.AREA_old[:-1,:] * self.direction[:-1,:,4]
+        self.AREA_new[ :-1, 1:  ] += self.AREA_old[1:,:-1] * self.direction[1:,:-1,5]
+        self.AREA_new[ :  , 1:  ] += self.AREA_old[:,:-1] * self.direction[:,:-1,6]
+        self.AREA_new[1:  , 1:  ] += self.AREA_old[:-1,:-1] * self.direction[:-1,:-1,7]
         
         self.flow_array[:,:,:] = 0
         self.flow_array[:,:,0][self.AREA_new > 0] = 255 * (0.75 -  0.75 * np.log(self.AREA_new[self.AREA_new > 0]) / np.log(np.max(self.AREA) + 0.01))
@@ -210,11 +278,9 @@ class Map(object):
         self.flow_array[:,:,2][self.AREA_new > 0] = 255
         self.flow_array[:,:,3][self.AREA_new > 0] = 255
         
-        self.prev_array[:,:,:] = 0
+        
         # if pygame.mouse.get_pressed()[2]:
-        #     prev_array[:,:,0][(coordinates[:,:,0] - x_mouse) ** 2.0 + (coordinates[:,:,1] - y_mouse) ** 2.0 < rad ** 2.0] = 150
-        #     prev_array[:,:,1][(coordinates[:,:,0] - x_mouse) ** 2.0 + (coordinates[:,:,1] - y_mouse) ** 2.0 < rad ** 2.0] = 150
-        #     prev_array[:,:,2][(coordinates[:,:,0] - x_mouse) ** 2.0 + (coordinates[:,:,1] - y_mouse) ** 2.0 < rad ** 2.0] = 255
+        
 
         #HYDROGRAPH
         # frame_number +=1
@@ -240,6 +306,7 @@ class Map(object):
         # gameDisplay.blit(flow_surface_scaled,(0,0))
 
         # preview surface
+        self.prev_surface.set_data(self.prev_array)
         # prev_surface = pygame.surfarray.make_surface(prev_array)
         # prev_surface_scaled = pygame.transform.scale(prev_surface,(res_width * scale,int(res_height * scale)))
         # prev_surface_scaled.set_alpha(100)
@@ -250,32 +317,10 @@ class Map(object):
         self.AREA_old[:,:] = self.AREA_new[:,:]
         self.AREA_new[:,:] = 0
 
-        return self.flow_surface
+        return self.DEM_surface, self.flow_surface, self.prev_surface
 
-############################
-###FUNCTIONS###
-############################
 
-def plot_setup(plot_array,x,y,xlabel,ylabel,Q_max):
-    width_pixel,height_pixel = plot_array.shape[0], plot_array.shape[1]
-    fig = Figure(figsize=(float(width_pixel)/100.,float(height_pixel)/100.),dpi=100)
-    ax = fig.gca()
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel(ylabel)
-    ax.set_xlim(t[0],t[-1])
-    ax.set_ylim(0,Q_max)
-    ax.plot(x,y,color='b')
-        
-    fig.tight_layout()
-    canvas = FigureCanvas(fig)
 
-    canvas.draw()
-    
-    buf = fig.canvas.tostring_rgb()
-    ncols,nrows = fig.canvas.get_width_height()
-    buf = np.fromstring(buf, dtype=np.uint8).reshape(nrows, ncols, 3)
-
-    return np.transpose(buf,(1, 0, 2))
 
 ############################
 ###PYGAME###
@@ -314,53 +359,7 @@ def plot_setup(plot_array,x,y,xlabel,ylabel,Q_max):
     # #mouse location
     # (x_mouse,y_mouse) = pygame.mouse.get_pos()
 
-    # #keyboard input
-    # if event.type == pygame.KEYDOWN:
-    #     if event.key == pygame.K_SPACE and key_down == 0:
-    #         key_down = 1
-    #         if toggle_stream == 0:
-    #             toggle_stream = 1
-    #         elif toggle_stream == 1:
-    #             toggle_stream = 0
-    #         area_threshold = area_threshold_list[area_threshold_index]
-    #     elif event.key == pygame.K_UP and key_down == 0:
-    #         key_down = 1
-    #         rad += 5
-    #     elif event.key == pygame.K_DOWN and key_down == 0:
-    #         key_down = 1
-    #         rad -= 5
-    #         if rad <=0:
-    #             rad = 5
-    #     elif event.key == pygame.K_LEFT and key_down == 0:
-    #         key_down = 1
-    #         area_threshold_index -= 1
-    #         if area_threshold_index <= 0:
-    #             area_threshold_index = 0
-    #         area_threshold = area_threshold_list[area_threshold_index]
-    #     elif event.key == pygame.K_RIGHT and key_down == 0:
-    #         key_down = 1
-    #         area_threshold_index += 1
-    #         if area_threshold_index >= len(area_threshold_list):
-    #             area_threshold_index = len(area_threshold_list) - 1
-    #         area_threshold = area_threshold_list[area_threshold_index]
-    #     elif event.key == pygame.K_1:
-    #         transparency_int = 1
-    #     elif event.key == pygame.K_2:
-    #         transparency_int = 2
-    #     elif event.key == pygame.K_3:
-    #         transparency_int = 3
-    #     elif event.key == pygame.K_4:
-    #         transparency_int = 4
-    #     elif event.key == pygame.K_5:
-    #         transparency_int = 5
-    #     elif event.key == pygame.K_6:
-    #         transparency_int = 6
-    #     elif event.key == pygame.K_7:
-    #         transparency_int = 7
-    #     elif event.key == pygame.K_8:
-    #         transparency_int = 8
-    #     elif event.key == pygame.K_9:
-    #         transparency_int = 9
+
 
     # if event.type == pygame.KEYUP:
     #     if event.key == pygame.K_SPACE:
@@ -394,10 +393,10 @@ class Runner(object):
 
         gui = GUI()
 
-        gui.map = Map()
+        gui.map = Map(gui)
 
         anim = animation.FuncAnimation(gui.fig, gui.map, 
-                                       interval=100, blit=False,
+                                       interval=10, blit=True,
                                        save_count=None)
 
         plt.show()
