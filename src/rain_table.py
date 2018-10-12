@@ -16,6 +16,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import events
+import utils
 
 
 
@@ -189,7 +190,7 @@ class Map(object):
         ############################
         ###ARRAYS###
         ############################
-        self.DEM_array = np.zeros((self.res_width,self.res_height,3),dtype=int)
+        self.DEM_array = np.zeros((self.res_width,self.res_height),dtype=int)
         self.flow_array = np.zeros((self.res_width,self.res_height,4),dtype=int)
         self.prev_array = np.zeros((self.res_width,self.res_height,4),dtype=int)
         self.AREA_old = np.zeros((self.res_width,self.res_height),dtype=int)
@@ -218,15 +219,16 @@ class Map(object):
                 self.coordinates[x_temp,y_temp,1] = y_temp * self.scale
 
         #DEM array
-        self.DEM_array[:,:,0] = (np.transpose(self.DEM) - self.min_ele) / (self.max_ele - self.min_ele) * 255
-        self.DEM_array[:,:,1] = (np.transpose(self.DEM) - self.min_ele) / (self.max_ele - self.min_ele) * 255
-        self.DEM_array[:,:,2] = (np.transpose(self.DEM) - self.min_ele) / (self.max_ele - self.min_ele) * 255
+        self.DEM_array[:,:] = (np.transpose(self.DEM) - self.min_ele) / (self.max_ele - self.min_ele) * 255
+        # self.DEM_array[:,:,1] = (np.transpose(self.DEM) - self.min_ele) / (self.max_ele - self.min_ele) * 255
+        # self.DEM_array[:,:,2] = (np.transpose(self.DEM) - self.min_ele) / (self.max_ele - self.min_ele) * 255
 
         self.area_threshold = self.area_threshold_list[self.area_threshold_index]
 
 
         #DEM surface artists for plotting
-        self.DEM_surface = self.map_ax.imshow(self.DEM_array) # , origin="lower"
+        self.DEM_cmap = utils.terrain_cmap()
+        self.DEM_surface = self.map_ax.imshow(self.DEM_array, cmap=self.DEM_cmap) # , origin="lower"
         self.flow_surface = self.map_ax.imshow(self.flow_array)
         self.prev_surface = self.map_ax.imshow(self.prev_array)
 
