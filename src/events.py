@@ -73,7 +73,7 @@ def mouse_move(event, m):
     if event.inaxes == m.map_ax:
         # m._mx, m._my = m.map_ax.transAxes.inverted().transform([x*m.scale, y*m.scale])
         # m._mx, m._my = m.map_ax.transAxes.inverted()
-        m._mx, m._my = y * m.scale, x * m.scale
+        m._mx, m._my = x * m.scale, y * m.scale
         m._inax = True
     else:
         m._mx, m._my = x, y

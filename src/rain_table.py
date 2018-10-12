@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import events
 import utils
-
+from PIL import Image
 
 
 ############################
@@ -63,9 +63,9 @@ class GUI(object):
         
         # setup the figure
         plt.rcParams['toolbar'] = 'None'
-        plt.rcParams['figure.figsize'] = 4, 12
+        plt.rcParams['figure.figsize'] = 12, 12
         self.fig, self.map_ax = plt.subplots()
-        plt.subplots_adjust(left=0, bottom=0, top=1)
+        plt.subplots_adjust(left=0, bottom=0, top=1, right=1)
         self.fig.canvas.set_window_title('SedEdu -- drainage basin simulation')
         self.map_ax.get_xaxis().set_visible(False)
         self.map_ax.get_yaxis().set_visible(False)
@@ -179,6 +179,9 @@ class Map(object):
         self.y_hydro, self.x_hydro = np.unravel_index(self.AREA.argmax(), self.AREA.shape)
 
         #aerial photo
+        self.aerial_image = Image.open(os.path.join(self.priv_path, 'aerial.png'))
+        self.aerial_array = np.array(self.aerial_image)
+        # print(self.aerial_array.shape)
         # aerial_surface = pygame.image.load(os.path.join(priv_path, 'aerial.png')).convert(24)
         # aerial_surface_scaled = pygame.transform.scale(aerial_surface,(int(res_width * scale),int(res_height * scale)))
 
@@ -228,9 +231,10 @@ class Map(object):
 
         #DEM surface artists for plotting
         self.DEM_cmap = utils.terrain_cmap()
-        self.DEM_surface = self.map_ax.imshow(self.DEM_array, cmap=self.DEM_cmap) # , origin="lower"
-        self.flow_surface = self.map_ax.imshow(self.flow_array)
-        self.prev_surface = self.map_ax.imshow(self.prev_array)
+        self.DEM_surface = self.map_ax.imshow(np.transpose(self.DEM_array), cmap=self.DEM_cmap) # , origin="lower"
+        self.aerial_surface = self.map_ax.imshow(self.aerial_array, extent=[0, self.res_width, 0, self.res_height], origin='lower')
+        self.flow_surface = self.map_ax.imshow(np.transpose(self.flow_array, axes=(1,0,2)))
+        self.prev_surface = self.map_ax.imshow(np.transpose(self.prev_array, axes=(1,0,2)))
 
 
         # connect press events
@@ -302,24 +306,17 @@ class Map(object):
         # gameDisplay.blit(aerial_surface_scaled,(0,0))
 
         # flow surface
-        self.flow_surface.set_data(self.flow_array)
-        # flow_surface_scaled = pygame.transform.scale(flow_surface,(res_width * scale,int(res_height * scale)))
-        # flow_surface_scaled.set_colorkey((0,0,0))
-        # gameDisplay.blit(flow_surface_scaled,(0,0))
+        self.flow_surface.set_data(np.transpose(self.flow_array, axes=(1,0,2)))
 
         # preview surface
-        self.prev_surface.set_data(self.prev_array)
-        # prev_surface = pygame.surfarray.make_surface(prev_array)
-        # prev_surface_scaled = pygame.transform.scale(prev_surface,(res_width * scale,int(res_height * scale)))
-        # prev_surface_scaled.set_alpha(100)
-        # prev_surface_scaled.set_colorkey((0,0,0))
-        # gameDisplay.blit(prev_surface_scaled,(0,0))
+        self.prev_surface.set_data(np.transpose(self.prev_array, axes=(1,0,2)))
 
         #update area array
         self.AREA_old[:,:] = self.AREA_new[:,:]
         self.AREA_new[:,:] = 0
 
-        return self.DEM_surface, self.flow_surface, self.prev_surface
+        return self.DEM_surface, self.aerial_surface, \
+               self.flow_surface, self.prev_surface
 
 
 
