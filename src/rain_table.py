@@ -102,6 +102,7 @@ class Map(object):
 
         self._rclicked = False
         self._lclicked = False
+        self._inax = False
 
         ############################
         ###PARAMETERS###
