@@ -113,11 +113,6 @@ class Map(object):
         #radius of rain cloud
         self.rad = 80
 
-        #frame rate
-        self.f_rate = 60
-
-        #transparency of cloud
-        self.alpha = 0.1
 
         ############################
         ###RASTERS###
@@ -169,7 +164,7 @@ class Map(object):
         #threshold for channelization
         self.area_threshold_index = 18
 
-        #define a base flow to scale hydrograph
+        #define print(event.key)a base flow to scale hydrograph
         self.base_flow = 2539.
 
         #control tranparency of the aerial image
@@ -182,7 +177,8 @@ class Map(object):
         #aerial photo
         self.aerial_image = Image.open(os.path.join(self.priv_path, 'aerial.png'))
         self.aerial_array = np.array(self.aerial_image)
-        # print(self.aerial_array.shape)
+        self.aerial_array[:, :, 3] = self.transparency_list[self.transparency_int - 1]
+        self._aerial_alpha_changed = False
         # aerial_surface = pygame.image.load(os.path.join(priv_path, 'aerial.png')).convert(24)
         # aerial_surface_scaled = pygame.transform.scale(aerial_surface,(int(res_width * scale),int(res_height * scale)))
 
@@ -270,14 +266,14 @@ class Map(object):
                 self.prev_array[:,:,3][(self.coordinates[:,:,0] - self._mx) ** 2.0 + (self.coordinates[:,:,1] - self._my) ** 2.0 < self.rad ** 2.0] = 100
 
         #ROUTE THE RAINFALL
-        self.AREA_new[ :-1,  :-1] += self.AREA_old[1:,1:] * self.direction[1:,1:,0]
-        self.AREA_new[ :  ,  :-1] += self.AREA_old[:,1:] * self.direction[:,1:,1]
-        self.AREA_new[1:  ,  :-1] += self.AREA_old[:-1,1:] * self.direction[:-1,1:,2]
-        self.AREA_new[ :-1,  :  ] += self.AREA_old[1:,:] * self.direction[1:,:,3]
-        self.AREA_new[1:  ,  :  ] += self.AREA_old[:-1,:] * self.direction[:-1,:,4]
-        self.AREA_new[ :-1, 1:  ] += self.AREA_old[1:,:-1] * self.direction[1:,:-1,5]
-        self.AREA_new[ :  , 1:  ] += self.AREA_old[:,:-1] * self.direction[:,:-1,6]
-        self.AREA_new[1:  , 1:  ] += self.AREA_old[:-1,:-1] * self.direction[:-1,:-1,7]
+        self.AREA_new[ :-1,  :-1] += self.AREA_old[1:  , 1:  ] * self.direction[1:,1:,0]
+        self.AREA_new[ :  ,  :-1] += self.AREA_old[ :  , 1:  ] * self.direction[:,1:,1]
+        self.AREA_new[1:  ,  :-1] += self.AREA_old[ :-1, 1:  ] * self.direction[:-1,1:,2]
+        self.AREA_new[ :-1,  :  ] += self.AREA_old[1:  ,  :  ] * self.direction[1:,:,3]
+        self.AREA_new[1:  ,  :  ] += self.AREA_old[ :-1,  :  ] * self.direction[:-1,:,4]
+        self.AREA_new[ :-1, 1:  ] += self.AREA_old[1:  ,  :-1] * self.direction[1:,:-1,5]
+        self.AREA_new[ :  , 1:  ] += self.AREA_old[ :  ,  :-1] * self.direction[:,:-1,6]
+        self.AREA_new[1:  , 1:  ] += self.AREA_old[ :-1,  :-1] * self.direction[:-1,:-1,7]
         
         self.flow_array[:,:,:] = 0
         self.flow_array[:,:,0][self.AREA_new > 0] = 255 * (0.75 -  0.75 * np.log(self.AREA_new[self.AREA_new > 0]) / np.log(np.max(self.AREA) + 0.01))
@@ -310,7 +306,14 @@ class Map(object):
         self.flow_surface.set_data(np.transpose(self.flow_array, axes=(1,0,2)))
 
         # preview surface
-        self.prev_surface.set_data(np.transpose(self.prev_array, axes=(1,0,2)))
+        if np.any(self.prev_surface):
+            self.prev_surface.set_data(np.transpose(self.prev_array, axes=(1,0,2)))
+
+        # aerial image surface
+        if self._aerial_alpha_changed:
+            self.aerial_array[:,:,3] = self.transparency_list[self.transparency_int - 1] # change the alpha
+            self.aerial_surface.set_data(self.aerial_array)
+            self._aerial_alpha_changed = False
 
         #update area array
         self.AREA_old[:,:] = self.AREA_new[:,:]

@@ -2,50 +2,42 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 def on_key(event, m):
-    # print('you pressed', event.key, event.xdata, event.ydata)
-    # # keyboard input
-    # if event.type == pygame.KEYDOWN:
+
     if event.key == ' ':
         m._toggle_stream = not m._toggle_stream
-        # area_threshold = area_threshold_list[area_threshold_index]
-    # elif event.key == pygame.K_UP and key_down == 0:
-    #     key_down = 1
-    #     rad += 5
-    # elif event.key == pygame.K_DOWN and key_down == 0:
-    #     key_down = 1
-    #     rad -= 5
-    #     if rad <=0:
-    #         rad = 5
-    # elif event.key == pygame.K_LEFT and key_down == 0:
-    #     key_down = 1
-    #     area_threshold_index -= 1
-    #     if area_threshold_index <= 0:
-    #         area_threshold_index = 0
-    #     area_threshold = area_threshold_list[area_threshold_index]
-    # elif event.key == pygame.K_RIGHT and key_down == 0:
-    #     key_down = 1
-    #     area_threshold_index += 1
-    #     if area_threshold_index >= len(area_threshold_list):
-    #         area_threshold_index = len(area_threshold_list) - 1
-    #     area_threshold = area_threshold_list[area_threshold_index]
-    # elif event.key == pygame.K_1:
-    #     transparency_int = 1
-    # elif event.key == pygame.K_2:
-    #     transparency_int = 2
-    # elif event.key == pygame.K_3:
-    #     transparency_int = 3
-    # elif event.key == pygame.K_4:
-    #     transparency_int = 4
-    # elif event.key == pygame.K_5:
-    #     transparency_int = 5
-    # elif event.key == pygame.K_6:
-    #     transparency_int = 6
-    # elif event.key == pygame.K_7:
-    #     transparency_int = 7
-    # elif event.key == pygame.K_8:
-    #     transparency_int = 8
-    # elif event.key == pygame.K_9:
-    #     transparency_int = 9
+    
+    elif event.key == 'up':
+        m.rad += 5
+    elif event.key == 'down':
+        m.rad -= 5
+        if m.rad <= 0:
+            m.rad = 5
+
+    elif event.key == 'left':
+        m.area_threshold_index -= 1
+        if m.area_threshold_index <= 0:
+            m.area_threshold_index = 0
+        m.area_threshold = m.area_threshold_list[m.area_threshold_index]
+    elif event.key == 'right':
+        m.area_threshold_index += 1
+        if m.area_threshold_index >= len(m.area_threshold_list):
+            m.area_threshold_index = len(m.area_threshold_list) - 1
+        m.area_threshold = m.area_threshold_list[m.area_threshold_index]
+
+    elif event.key == 'pageup':
+        m.transparency_int += 1
+        if m.transparency_int >= len(m.transparency_list):
+            m.transparency_int = len(m.transparency_list) - 1
+        m._aerial_alpha_changed = True
+    elif event.key == 'pagedown':
+        m.transparency_int -= 1
+        if m.transparency_int <= 1:
+            m.transparency_int = 1
+        print(m.transparency_list[m.transparency_int])
+        m._aerial_alpha_changed = True
+    elif event.key in {'0','1','2','3','4','5','6','7','8','9'}:
+        m.transparency_int = int(event.key)
+        m._aerial_alpha_changed = True
 
 
 def on_click(event, m):
