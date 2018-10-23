@@ -4,25 +4,25 @@ import matplotlib.pyplot as plt
 def on_key(event, m):
 
     if event.key == ' ':
-        m._toggle_stream = not m._toggle_stream
+        m.sm._toggle_stream = not m.sm._toggle_stream
     
     elif event.key == 'up':
-        m.rad += 5
+        m.sm.slide_cloud.increase_val()
     elif event.key == 'down':
-        m.rad -= 5
-        if m.rad <= 0:
-            m.rad = 5
+        m.sm.slide_cloud.decrease_val()
 
     elif event.key == 'left':
-        m.area_threshold_index -= 1
-        if m.area_threshold_index <= 0:
-            m.area_threshold_index = 0
-        m.area_threshold = m.area_threshold_list[m.area_threshold_index]
+        # m.area_threshold_index -= 1
+        # if m.area_threshold_index <= 0:
+        #     m.area_threshold_index = 0
+        # m.area_threshold = m.area_threshold_list[m.area_threshold_index]
+        m.sm.slide_baseflow.decrease_val()
     elif event.key == 'right':
-        m.area_threshold_index += 1
-        if m.area_threshold_index >= len(m.area_threshold_list):
-            m.area_threshold_index = len(m.area_threshold_list) - 1
-        m.area_threshold = m.area_threshold_list[m.area_threshold_index]
+        # m.area_threshold_index += 1
+        # if m.area_threshold_index >= len(m.area_threshold_list):
+        #     m.area_threshold_index = len(m.area_threshold_list) - 1
+        # m.area_threshold = m.area_threshold_list[m.area_threshold_index]
+        m.sm.slide_baseflow.increase_val()
 
     elif event.key == 'pageup':
         m.transparency_int += 1

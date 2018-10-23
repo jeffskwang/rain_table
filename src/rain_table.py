@@ -19,6 +19,8 @@ import events
 import utils
 from PIL import Image
 
+import widgets
+from slider_manager import SliderManager
 
 ############################
 ###FUNCTIONS###
@@ -63,9 +65,9 @@ class GUI(object):
         
         # setup the figure
         plt.rcParams['toolbar'] = 'None'
-        plt.rcParams['figure.figsize'] = 12, 12
+        plt.rcParams['figure.figsize'] = 12, 8
         self.fig, self.map_ax = plt.subplots()
-        plt.subplots_adjust(left=0, bottom=0, top=1, right=1)
+        plt.subplots_adjust(left=0.1, right=0.9, bottom=0.4)
         self.fig.canvas.set_window_title('SedEdu -- drainage basin simulation')
         self.map_ax.get_xaxis().set_visible(False)
         self.map_ax.get_yaxis().set_visible(False)
@@ -78,8 +80,30 @@ class GUI(object):
                             # lambda v, x: str(v / 1000).format('%0.0f')) )
 
         # add sliders
-        # self.config = config
-        # self.sm = SliderManager(self)
+        self.config = utils.Config
+
+        self.config.baseflowmin = 500
+        self.config.baseflowmax = 3000
+        self.config.baseflowinit = 2000
+        self.config.baseflowstep = 100
+
+        self.config.cloudmin = 50
+        self.config.cloudmax = 200
+        self.config.cloudinit = 100
+        self.config.cloudstep = 10
+
+        self.config._toggle_stream = True
+
+
+        self.sm = SliderManager(self)
+
+        widget_color = 'lightgoldenrodyellow'
+
+        # slide_baseflow_ax = plt.axes([0.565, 0.175, 0.36, 0.05], facecolor=widget_color)
+        # self.slide_baseflow = widgets.MinMaxSlider(slide_baseflow_ax, 'baseflow discharge (m$^3$/s)', 
+        #                                 1000, 5000, 
+        #                                 valinit=2000, valstep=100, 
+        #                                 valfmt="%0.0f", transform=self.map_ax.transAxes)
         
     def pause_anim(self, event):
         """
@@ -96,9 +120,10 @@ class Map(object):
 
         # add_ax
         self.gui = gui
-        self.fig = self.gui.fig
-        self.map_ax = self.gui.map_ax
-        
+        self.fig = gui.fig
+        self.map_ax = gui.map_ax
+        self.config = gui.config
+        self.sm = gui.sm
 
         self._rclicked = False
         self._lclicked = False
@@ -111,7 +136,8 @@ class Map(object):
         self.scale = 3
 
         #radius of rain cloud
-        self.rad = 80
+        # self.rad = 80
+        self.cloud = self.config.cloudinit
 
 
         ############################
@@ -153,7 +179,7 @@ class Map(object):
         ############################
         #intialize parameters
         #background streams on/off
-        self._toggle_stream = False
+        
 
         #key press down/up
         self.key_down = 0
@@ -162,14 +188,14 @@ class Map(object):
         self.frame_number = plot_every_frame = 10
 
         #threshold for channelization
-        self.area_threshold_index = 18
+        self.baseflow_threshold = self.config.baseflowmax - self.sm.baseflow
 
         #define print(event.key)a base flow to scale hydrograph
-        self.base_flow = 2539.
+        # self.base_flow = 2539
 
         #control tranparency of the aerial image
         self.transparency_int = 7
-        self.transparency_list = np.linspace(0,255,9)
+        self.transparency_list = np.linspace(0, 255, 9)
 
         #hydrograph gauge location
         self.y_hydro, self.x_hydro = np.unravel_index(self.AREA.argmax(), self.AREA.shape)
@@ -197,14 +223,14 @@ class Map(object):
         self.AREA_new = np.zeros((self.res_width,self.res_height),dtype=int)
 
         #hydrograph plot
-        self.plot_hydro = np.zeros((int(self.res_width * self.scale)-int(self.res_height*0.5*self.scale),int(self.res_height*0.5*self.scale),3),dtype=int)
+        # self.plot_hydro = np.zeros((int(self.res_width * self.scale)-int(self.res_height*0.5*self.scale),int(self.res_height*0.5*self.scale),3),dtype=int)
 
         #hyrograph arrays
         self.t = np.linspace(-100.,0.0,1001)
         self.Q = np.zeros(1001)
 
         #predifined area thresholds
-        self.area_threshold_list = np.concatenate((np.zeros(1),np.logspace(0,np.log10(np.max(self.AREA)),29)),axis=0)
+        # self.baseflow_threshold_list = np.concatenate((np.zeros(1),np.logspace(0,np.log10(np.max(self.AREA)),29)),axis=0)
 
         #setup direction array
         self.direction = np.zeros((self.res_width,self.res_height,8),dtype=int)
@@ -222,8 +248,6 @@ class Map(object):
         self.DEM_array[:,:] = (np.transpose(self.DEM) - self.min_ele) / (self.max_ele - self.min_ele) * 255
         # self.DEM_array[:,:,1] = (np.transpose(self.DEM) - self.min_ele) / (self.max_ele - self.min_ele) * 255
         # self.DEM_array[:,:,2] = (np.transpose(self.DEM) - self.min_ele) / (self.max_ele - self.min_ele) * 255
-
-        self.area_threshold = self.area_threshold_list[self.area_threshold_index]
 
 
         #DEM surface artists for plotting
@@ -248,22 +272,28 @@ class Map(object):
 
     def __call__(self, i):
 
+        # grab the values from the sliders
+        self.sm.get_all()
+
         #toggle base_flow
-        if self._toggle_stream:
-            self.AREA_old[np.transpose(self.AREA) >= self.area_threshold ] += 1
+        if self.sm._toggle_stream:
+            self.baseflow_threshold = self.config.baseflowmax - self.sm.baseflow + self.config.baseflowstep
+            self.AREA_old[np.transpose(self.AREA) >= self.baseflow_threshold ] += 1
 
         # mouse_move   
         if self._lclicked:
             if self._inax:
-                self.AREA_old[(self.coordinates[:,:,0] - self._mx) ** 2.0 + (self.coordinates[:,:,1] - self._my) ** 2.0 < self.rad ** 2.0] += 1
+                self.cloud = self.sm.cloud
+                self.AREA_old[(self.coordinates[:,:,0] - self._mx) ** 2.0 + (self.coordinates[:,:,1] - self._my) ** 2.0 < self.cloud ** 2.0] += 1
 
         self.prev_array[:,:,:] = 0
         if self._rclicked:
             if self._inax:
-                self.prev_array[:,:,0][(self.coordinates[:,:,0] - self._mx) ** 2.0 + (self.coordinates[:,:,1] - self._my) ** 2.0 < self.rad ** 2.0] = 150
-                self.prev_array[:,:,1][(self.coordinates[:,:,0] - self._mx) ** 2.0 + (self.coordinates[:,:,1] - self._my) ** 2.0 < self.rad ** 2.0] = 150
-                self.prev_array[:,:,2][(self.coordinates[:,:,0] - self._mx) ** 2.0 + (self.coordinates[:,:,1] - self._my) ** 2.0 < self.rad ** 2.0] = 255
-                self.prev_array[:,:,3][(self.coordinates[:,:,0] - self._mx) ** 2.0 + (self.coordinates[:,:,1] - self._my) ** 2.0 < self.rad ** 2.0] = 100
+                self.cloud = self.sm.cloud
+                self.prev_array[:,:,0][(self.coordinates[:,:,0] - self._mx) ** 2.0 + (self.coordinates[:,:,1] - self._my) ** 2.0 < self.cloud ** 2.0] = 150
+                self.prev_array[:,:,1][(self.coordinates[:,:,0] - self._mx) ** 2.0 + (self.coordinates[:,:,1] - self._my) ** 2.0 < self.cloud ** 2.0] = 150
+                self.prev_array[:,:,2][(self.coordinates[:,:,0] - self._mx) ** 2.0 + (self.coordinates[:,:,1] - self._my) ** 2.0 < self.cloud ** 2.0] = 255
+                self.prev_array[:,:,3][(self.coordinates[:,:,0] - self._mx) ** 2.0 + (self.coordinates[:,:,1] - self._my) ** 2.0 < self.cloud ** 2.0] = 100
 
         #ROUTE THE RAINFALL
         self.AREA_new[ :-1,  :-1] += self.AREA_old[1:  , 1:  ] * self.direction[1:,1:,0]

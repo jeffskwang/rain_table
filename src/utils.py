@@ -28,11 +28,9 @@ def terrain_cmap():
     return LinearSegmentedColormap('terrain2', cdict)
 
 
-#   R   G   B  
-# 255 255 255
-# 102  51   0
-# 102  51  12
-# 244 189  69
-# 255 255 204
-# 129 195  31
-#  51 102   0
+class Config: 
+    """
+    dummy config class for storing info during generation of GUI
+    """
+
+    pass

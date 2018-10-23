@@ -186,6 +186,14 @@ class MinMaxSlider(AxesWidget):
         for cid, func in six.iteritems(self.observers):
             func(val)
 
+    def increase_val(self):
+        newval = self._value_in_bounds(self.val + self.valstep)
+        self.set_val(newval)
+
+    def decrease_val(self):
+        newval = self._value_in_bounds(self.val - self.valstep)
+        self.set_val(newval)
+
     def on_changed(self, func):
         """
         When the slider value is changed call *func* with the new
