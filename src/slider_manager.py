@@ -17,17 +17,17 @@ class SliderManager(object):
                                         valinit=gui.config.baseflowinit, valstep=gui.config.baseflowstep, 
                                         valfmt="%0.0f", transform=gui.map_ax.transAxes)
 
-        slide_cloud_ax = plt.axes([0.565, 0.175, 0.36, 0.05], facecolor=widget_color)
+        slide_cloud_ax = plt.axes([0.565, 0.165, 0.36, 0.05], facecolor=widget_color)
         self.slide_cloud = widgets.MinMaxSlider(slide_cloud_ax, 'cloud radius (km)', 
                                          gui.config.cloudmin, gui.config.cloudmax, 
                                          valinit=gui.config.cloudinit, valstep=gui.config.cloudstep, 
                                          valfmt="%g", transform=gui.map_ax.transAxes)
 
-        # slide_Ta_ax = plt.axes([0.565, 0.665, 0.36, 0.05], facecolor=widget_color)
-        # self.slide_Ta = widgets.MinMaxSlider(slide_Ta_ax, 'avulsion timescale (yr)', 
-        #                                 gui.config.Tamin, gui.config.Tamax, 
-        #                                 valinit=gui.config.Tainit, valstep=gui.config.Tastep, 
-        #                                 valfmt="%i", transform=gui.map_ax.transAxes)
+        slide_transp_ax = plt.axes([0.1, 0.275, 0.36, 0.05], facecolor=widget_color)
+        self.slide_transp = widgets.MinMaxSlider(slide_transp_ax, 'image transparency (%)', 
+                                        gui.config.transpmin, gui.config.transpmax, 
+                                        valinit=gui.config.transpinit, valstep=gui.config.transpstep, 
+                                        valfmt="%i", transform=gui.map_ax.transAxes)
 
         # rad_col_ax = plt.axes([0.565, 0.45, 0.225, 0.15], facecolor=widget_color)
         # self.rad_col = widgets.RadioButtons(rad_col_ax, ('Deposit age', 
@@ -68,6 +68,7 @@ class SliderManager(object):
         #             'Subsidence rate':'cloud'}
 
         # read the sliders for values
+        self.transp = 10
         self.get_all()
         # self.D50 = gui.config.D50
         # self.cong = gui.config.cong
@@ -80,15 +81,16 @@ class SliderManager(object):
         # self.yViewmax = gui.config.yViewmax
 
     def get_display_options(self):
-        # self.colFlag = self.col_dict[self.rad_col.value_selected]
-        # self.yView = self.slide_yView.val
-        pass
+        transp0 = self.transp
+        self.transp = (1 - (self.slide_transp.val / 100)) * 255
+        if not self.transp == transp0:
+            self._aerial_alpha_changed = True
 
     def get_calculation_options(self):
         # self.Bb = self.slide_Bb.val * 1000
         self.baseflow = self.slide_baseflow.val
         self.cloud = self.slide_cloud.val
-        # self.Ta = self.slide_Ta.val
+        
 
     def get_all(self):
         self.get_display_options()

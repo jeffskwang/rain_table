@@ -22,35 +22,6 @@ from PIL import Image
 import widgets
 from slider_manager import SliderManager
 
-############################
-###FUNCTIONS###
-############################
-
-def plot_setup(plot_array,x,y,xlabel,ylabel,Q_max):
-    width_pixel,height_pixel = plot_array.shape[0], plot_array.shape[1]
-    fig = Figure(figsize=(float(width_pixel)/100.,float(height_pixel)/100.),dpi=100)
-    ax = fig.gca()
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel(ylabel)
-    ax.set_xlim(t[0],t[-1])
-    ax.set_ylim(0,Q_max)
-    ax.plot(x,y,color='b')
-        
-    fig.tight_layout()
-    canvas = FigureCanvas(fig)
-
-    canvas.draw()
-    
-    buf = fig.canvas.tostring_rgb()
-    ncols,nrows = fig.canvas.get_width_height()
-    buf = np.fromstring(buf, dtype=np.uint8).reshape(nrows, ncols, 3)
-
-    return np.transpose(buf,(1, 0, 2))
-
-
-
-
-
 class GUI(object):
 
     """     
@@ -67,7 +38,7 @@ class GUI(object):
         plt.rcParams['toolbar'] = 'None'
         plt.rcParams['figure.figsize'] = 12, 8
         self.fig, self.map_ax = plt.subplots()
-        plt.subplots_adjust(left=0.1, right=0.9, bottom=0.4)
+        plt.subplots_adjust(left=0, top=1, right=1, bottom=0.45)
         self.fig.canvas.set_window_title('SedEdu -- drainage basin simulation')
         self.map_ax.get_xaxis().set_visible(False)
         self.map_ax.get_yaxis().set_visible(False)
@@ -92,6 +63,11 @@ class GUI(object):
         self.config.cloudinit = 100
         self.config.cloudstep = 10
 
+        self.config.transpmin = 0
+        self.config.transpmax = 100
+        self.config.transpinit = 20
+        self.config.transpstep = 10
+
         self.config._toggle_stream = True
 
 
@@ -99,12 +75,7 @@ class GUI(object):
 
         widget_color = 'lightgoldenrodyellow'
 
-        # slide_baseflow_ax = plt.axes([0.565, 0.175, 0.36, 0.05], facecolor=widget_color)
-        # self.slide_baseflow = widgets.MinMaxSlider(slide_baseflow_ax, 'baseflow discharge (m$^3$/s)', 
-        #                                 1000, 5000, 
-        #                                 valinit=2000, valstep=100, 
-        #                                 valfmt="%0.0f", transform=self.map_ax.transAxes)
-        
+
     def pause_anim(self, event):
         """
         pause animation by altering hidden var
@@ -124,6 +95,7 @@ class Map(object):
         self.map_ax = gui.map_ax
         self.config = gui.config
         self.sm = gui.sm
+        self.sm.get_all()
 
         self._rclicked = False
         self._lclicked = False
@@ -134,10 +106,6 @@ class Map(object):
         ############################
         #scale of screen_res / DEM_res
         self.scale = 3
-
-        #radius of rain cloud
-        # self.rad = 80
-        self.cloud = self.config.cloudinit
 
 
         ############################
@@ -177,25 +145,14 @@ class Map(object):
         ############################
         ###INITIALIZATION###
         ############################
-        #intialize parameters
-        #background streams on/off
         
 
-        #key press down/up
-        self.key_down = 0
-
-        #update matplotlib every # frame to improve performance
-        self.frame_number = plot_every_frame = 10
-
+      
         #threshold for channelization
         self.baseflow_threshold = self.config.baseflowmax - self.sm.baseflow
 
         #define print(event.key)a base flow to scale hydrograph
         # self.base_flow = 2539
-
-        #control tranparency of the aerial image
-        self.transparency_int = 7
-        self.transparency_list = np.linspace(0, 255, 9)
 
         #hydrograph gauge location
         self.y_hydro, self.x_hydro = np.unravel_index(self.AREA.argmax(), self.AREA.shape)
@@ -203,11 +160,9 @@ class Map(object):
         #aerial photo
         self.aerial_image = Image.open(os.path.join(self.priv_path, 'aerial.png'))
         self.aerial_array = np.array(self.aerial_image)
-        self.aerial_array[:, :, 3] = self.transparency_list[self.transparency_int - 1]
-        self._aerial_alpha_changed = False
-        # aerial_surface = pygame.image.load(os.path.join(priv_path, 'aerial.png')).convert(24)
-        # aerial_surface_scaled = pygame.transform.scale(aerial_surface,(int(res_width * scale),int(res_height * scale)))
-
+        self.aerial_array[:, :, 3] = self.sm.transp
+        # self._aerial_alpha_changed = False
+      
         #contols
         # controls_surface = pygame.image.load(os.path.join(priv_path, 'rain_table_controls.png'))
         # controls_surface_scaled  = pygame.transform.scale(controls_surface,(int(res_height * scale * 0.5),int(res_height * scale * 0.5)))
@@ -253,7 +208,7 @@ class Map(object):
         #DEM surface artists for plotting
         self.DEM_cmap = utils.terrain_cmap()
         self.DEM_surface = self.map_ax.imshow(np.transpose(self.DEM_array), cmap=self.DEM_cmap) # , origin="lower"
-        self.aerial_surface = self.map_ax.imshow(self.aerial_array, extent=[0, self.res_width, 0, self.res_height], origin='lower')
+        self.aerial_surface = self.map_ax.imshow(self.aerial_array, extent=[-1, self.res_width, -1, self.res_height], origin='lower')
         self.flow_surface = self.map_ax.imshow(np.transpose(self.flow_array, axes=(1,0,2)))
         self.prev_surface = self.map_ax.imshow(np.transpose(self.prev_array, axes=(1,0,2)))
 
@@ -305,15 +260,12 @@ class Map(object):
         self.AREA_new[ :  , 1:  ] += self.AREA_old[ :  ,  :-1] * self.direction[:,:-1,6]
         self.AREA_new[1:  , 1:  ] += self.AREA_old[ :-1,  :-1] * self.direction[:-1,:-1,7]
         
+        #UPDATE THE FLOW ARRAY
         self.flow_array[:,:,:] = 0
         self.flow_array[:,:,0][self.AREA_new > 0] = 255 * (0.75 -  0.75 * np.log(self.AREA_new[self.AREA_new > 0]) / np.log(np.max(self.AREA) + 0.01))
         self.flow_array[:,:,1][self.AREA_new > 0] = 255 * (0.75 -  0.75 * np.log(self.AREA_new[self.AREA_new > 0]) / np.log(np.max(self.AREA) + 0.01))
         self.flow_array[:,:,2][self.AREA_new > 0] = 255
         self.flow_array[:,:,3][self.AREA_new > 0] = 255
-        
-        
-        # if pygame.mouse.get_pressed()[2]:
-        
 
         #HYDROGRAPH
         # frame_number +=1
@@ -340,8 +292,8 @@ class Map(object):
             self.prev_surface.set_data(np.transpose(self.prev_array, axes=(1,0,2)))
 
         # aerial image surface
-        if self._aerial_alpha_changed:
-            self.aerial_array[:,:,3] = self.transparency_list[self.transparency_int - 1] # change the alpha
+        if self.sm._aerial_alpha_changed:
+            self.aerial_array[:,:,3] = self.sm.transp # change the alpha
             self.aerial_surface.set_data(self.aerial_array)
             self._aerial_alpha_changed = False
 

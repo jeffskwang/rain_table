@@ -12,31 +12,24 @@ def on_key(event, m):
         m.sm.slide_cloud.decrease_val()
 
     elif event.key == 'left':
-        # m.area_threshold_index -= 1
-        # if m.area_threshold_index <= 0:
-        #     m.area_threshold_index = 0
-        # m.area_threshold = m.area_threshold_list[m.area_threshold_index]
         m.sm.slide_baseflow.decrease_val()
     elif event.key == 'right':
-        # m.area_threshold_index += 1
-        # if m.area_threshold_index >= len(m.area_threshold_list):
-        #     m.area_threshold_index = len(m.area_threshold_list) - 1
-        # m.area_threshold = m.area_threshold_list[m.area_threshold_index]
         m.sm.slide_baseflow.increase_val()
 
     elif event.key == 'pageup':
-        m.transparency_int += 1
-        if m.transparency_int >= len(m.transparency_list):
-            m.transparency_int = len(m.transparency_list) - 1
+        m.sm.slide_transp.increase_val()
         m._aerial_alpha_changed = True
     elif event.key == 'pagedown':
-        m.transparency_int -= 1
-        if m.transparency_int <= 1:
-            m.transparency_int = 1
-        print(m.transparency_list[m.transparency_int])
+        m.sm.slide_transp.decrease_val()
         m._aerial_alpha_changed = True
     elif event.key in {'0','1','2','3','4','5','6','7','8','9'}:
-        m.transparency_int = int(event.key)
+        if event.key == '0':
+            transp_int = 9
+        else:
+            transp_int = int(event.key)-1
+        scaled = (transp_int / 9) * 100
+        newval = m.sm.slide_transp._value_in_bounds(scaled)
+        m.sm.slide_transp.set_val(newval)
         m._aerial_alpha_changed = True
 
 

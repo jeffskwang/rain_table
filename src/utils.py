@@ -34,3 +34,25 @@ class Config:
     """
 
     pass
+
+
+def plot_setup(plot_array,x,y,xlabel,ylabel,Q_max):
+    width_pixel,height_pixel = plot_array.shape[0], plot_array.shape[1]
+    fig = Figure(figsize=(float(width_pixel)/100.,float(height_pixel)/100.),dpi=100)
+    ax = fig.gca()
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.set_xlim(t[0],t[-1])
+    ax.set_ylim(0,Q_max)
+    ax.plot(x,y,color='b')
+        
+    fig.tight_layout()
+    canvas = FigureCanvas(fig)
+
+    canvas.draw()
+    
+    buf = fig.canvas.tostring_rgb()
+    ncols,nrows = fig.canvas.get_width_height()
+    buf = np.fromstring(buf, dtype=np.uint8).reshape(nrows, ncols, 3)
+
+    return np.transpose(buf,(1, 0, 2))
