@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 def on_key(event, m):
 
     if event.key == ' ':
-        m.sm._toggle_stream = not m.sm._toggle_stream
+        m.mm._toggle_stream = not m.mm._toggle_stream
     
     elif event.key == 'up':
         m.sm.slide_cloud.increase_val()
@@ -33,33 +33,37 @@ def on_key(event, m):
         m._aerial_alpha_changed = True
 
 
-def on_click(event, m):
+def on_click(event, mm):
     
     if event.button == 1: # left click
-        m._lclicked = True
+        mm._lclicked = True
     if event.button == 3: # right click
-        m._rclicked = True
+        mm._rclicked = True
 
 
-def off_click(event, m):
+def off_click(event, mm):
     
     if event.button == 1: # left click
-        m._lclicked = False
+        mm._lclicked = False
     if event.button == 3: # right click
-        m._rclicked = False
+        mm._rclicked = False
 
 
-def mouse_move(event, m):
+def mouse_move(event, mm, map_ax, scale):
 
     x, y = event.xdata, event.ydata
     # print(event.inaxes)
     # print(m.map_ax)
 
-    if event.inaxes == m.map_ax:
-        # m._mx, m._my = m.map_ax.transAxes.inverted().transform([x*m.scale, y*m.scale])
-        # m._mx, m._my = m.map_ax.transAxes.inverted()
-        m._mx, m._my = x * m.scale, y * m.scale
-        m._inax = True
+    if event.inaxes == map_ax:
+        mm._mx, mm._my = x * scale, y * scale
+        mm._inax = True
     else:
-        m._mx, m._my = x, y
-        m._inax = False
+        mm._mx, mm._my = x, y
+        mm._inax = False
+
+def transp_slider_action(event, aerial_array, newval, aerial_surface):
+    newval = (1 - (event / 100)) * 255
+    aerial_array[:,:,3] = newval # change the alpha
+    aerial_surface.set_data(aerial_array)
+    # m._aerial_alpha_changed = False

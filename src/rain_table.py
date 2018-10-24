@@ -20,7 +20,7 @@ import utils
 from PIL import Image
 
 import widgets
-from slider_manager import SliderManager
+from slider_manager import SliderManager, MiniManager
 
 class GUI(object):
 
@@ -73,8 +73,6 @@ class GUI(object):
 
         self.sm = SliderManager(self)
 
-        widget_color = 'lightgoldenrodyellow'
-
 
     def pause_anim(self, event):
         """
@@ -96,10 +94,12 @@ class Map(object):
         self.config = gui.config
         self.sm = gui.sm
         self.sm.get_all()
+        self.mm = MiniManager()
 
-        self._rclicked = False
-        self._lclicked = False
-        self._inax = False
+        # self._rclicked = False
+        # self._lclicked = False
+        # self._inax = False
+        # self._toggle_stream = self.config._toggle_stream
 
         ############################
         ###PARAMETERS###
@@ -160,7 +160,7 @@ class Map(object):
         #aerial photo
         self.aerial_image = Image.open(os.path.join(self.priv_path, 'aerial.png'))
         self.aerial_array = np.array(self.aerial_image)
-        self.aerial_array[:, :, 3] = self.sm.transp
+        self.aerial_array[:, :, 3] = (1 - (self.config.transpinit / 100)) * 255
         # self._aerial_alpha_changed = False
       
         #contols
@@ -214,51 +214,55 @@ class Map(object):
 
 
         # connect press events
-        mouseon_cid = self.fig.canvas.mpl_connect('button_press_event', lambda e: events.on_click(e, self))
-        mouseoff_cid = self.fig.canvas.mpl_connect('button_release_event', lambda e: events.off_click(e, self))
-        mousemv_cid = self.fig.canvas.mpl_connect('motion_notify_event', lambda e: events.mouse_move(e, self))
+        mouseon_cid = self.fig.canvas.mpl_connect('button_press_event', lambda e: events.on_click(e, self.mm))
+        mouseoff_cid = self.fig.canvas.mpl_connect('button_release_event', lambda e: events.off_click(e, self.mm))
+        mousemv_cid = self.fig.canvas.mpl_connect('motion_notify_event', lambda e: events.mouse_move(e, self.mm, self.map_ax, self.scale))
         
         key_cid = self.fig.canvas.mpl_connect('key_press_event', lambda e: events.on_key(e, self))
 
-
-
+        # dedicated action for transparency slider
+        transp_changed = self.sm.slide_transp.on_changed(lambda e: events.transp_slider_action(e,
+                                                                             self.aerial_array,
+                                                                             self.sm.slide_transp.val,
+                                                                             self.aerial_surface))
 
 
 
     def __call__(self, i):
 
+
         # grab the values from the sliders
         self.sm.get_all()
 
         #toggle base_flow
-        if self.sm._toggle_stream:
+        if self.mm._toggle_stream:
             self.baseflow_threshold = self.config.baseflowmax - self.sm.baseflow + self.config.baseflowstep
             self.AREA_old[np.transpose(self.AREA) >= self.baseflow_threshold ] += 1
 
         # mouse_move   
-        if self._lclicked:
-            if self._inax:
+        if self.mm._lclicked:
+            if self.mm._inax:
                 self.cloud = self.sm.cloud
-                self.AREA_old[(self.coordinates[:,:,0] - self._mx) ** 2.0 + (self.coordinates[:,:,1] - self._my) ** 2.0 < self.cloud ** 2.0] += 1
+                self.AREA_old[(self.coordinates[:,:,0] - self.mm._mx) ** 2.0 + (self.coordinates[:,:,1] - self.mm._my) ** 2.0 < self.cloud ** 2.0] += 1
 
         self.prev_array[:,:,:] = 0
-        if self._rclicked:
-            if self._inax:
+        if self.mm._rclicked:
+            if self.mm._inax:
                 self.cloud = self.sm.cloud
-                self.prev_array[:,:,0][(self.coordinates[:,:,0] - self._mx) ** 2.0 + (self.coordinates[:,:,1] - self._my) ** 2.0 < self.cloud ** 2.0] = 150
-                self.prev_array[:,:,1][(self.coordinates[:,:,0] - self._mx) ** 2.0 + (self.coordinates[:,:,1] - self._my) ** 2.0 < self.cloud ** 2.0] = 150
-                self.prev_array[:,:,2][(self.coordinates[:,:,0] - self._mx) ** 2.0 + (self.coordinates[:,:,1] - self._my) ** 2.0 < self.cloud ** 2.0] = 255
-                self.prev_array[:,:,3][(self.coordinates[:,:,0] - self._mx) ** 2.0 + (self.coordinates[:,:,1] - self._my) ** 2.0 < self.cloud ** 2.0] = 100
+                self.prev_array[:,:,0][(self.coordinates[:,:,0] - self.mm._mx) ** 2.0 + (self.coordinates[:,:,1] - self.mm._my) ** 2.0 < self.cloud ** 2.0] = 150
+                self.prev_array[:,:,1][(self.coordinates[:,:,0] - self.mm._mx) ** 2.0 + (self.coordinates[:,:,1] - self.mm._my) ** 2.0 < self.cloud ** 2.0] = 150
+                self.prev_array[:,:,2][(self.coordinates[:,:,0] - self.mm._mx) ** 2.0 + (self.coordinates[:,:,1] - self.mm._my) ** 2.0 < self.cloud ** 2.0] = 255
+                self.prev_array[:,:,3][(self.coordinates[:,:,0] - self.mm._mx) ** 2.0 + (self.coordinates[:,:,1] - self.mm._my) ** 2.0 < self.cloud ** 2.0] = 100
 
         #ROUTE THE RAINFALL
-        self.AREA_new[ :-1,  :-1] += self.AREA_old[1:  , 1:  ] * self.direction[1:,1:,0]
-        self.AREA_new[ :  ,  :-1] += self.AREA_old[ :  , 1:  ] * self.direction[:,1:,1]
-        self.AREA_new[1:  ,  :-1] += self.AREA_old[ :-1, 1:  ] * self.direction[:-1,1:,2]
-        self.AREA_new[ :-1,  :  ] += self.AREA_old[1:  ,  :  ] * self.direction[1:,:,3]
-        self.AREA_new[1:  ,  :  ] += self.AREA_old[ :-1,  :  ] * self.direction[:-1,:,4]
-        self.AREA_new[ :-1, 1:  ] += self.AREA_old[1:  ,  :-1] * self.direction[1:,:-1,5]
-        self.AREA_new[ :  , 1:  ] += self.AREA_old[ :  ,  :-1] * self.direction[:,:-1,6]
-        self.AREA_new[1:  , 1:  ] += self.AREA_old[ :-1,  :-1] * self.direction[:-1,:-1,7]
+        self.AREA_new[ :-1,  :-1] += self.AREA_old[1:  , 1:  ] * self.direction[1:  , 1:  , 0]
+        self.AREA_new[ :  ,  :-1] += self.AREA_old[ :  , 1:  ] * self.direction[ :  , 1:  , 1]
+        self.AREA_new[1:  ,  :-1] += self.AREA_old[ :-1, 1:  ] * self.direction[ :-1, 1:  , 2]
+        self.AREA_new[ :-1,  :  ] += self.AREA_old[1:  ,  :  ] * self.direction[1:  ,  :  , 3]
+        self.AREA_new[1:  ,  :  ] += self.AREA_old[ :-1,  :  ] * self.direction[ :-1,  :  , 4]
+        self.AREA_new[ :-1, 1:  ] += self.AREA_old[1:  ,  :-1] * self.direction[1:  ,  :-1, 5]
+        self.AREA_new[ :  , 1:  ] += self.AREA_old[ :  ,  :-1] * self.direction[ :  ,  :-1, 6]
+        self.AREA_new[1:  , 1:  ] += self.AREA_old[ :-1,  :-1] * self.direction[ :-1,  :-1, 7]
         
         #UPDATE THE FLOW ARRAY
         self.flow_array[:,:,:] = 0
@@ -276,14 +280,7 @@ class Map(object):
             # plot_hydro = plot_setup(plot_hydro,t,Q,r'$t$ [$T$]',r'$Q/Q_b$ [$L^3/T$]',np.max(AREA)/base_flow)
             # plot_to_surface = pygame.surfarray.make_surface(plot_hydro)
             # gameDisplay.blit(plot_to_surface,(0,res_height*scale))
-                                              
-
-
-        #aerial surface
-        # aerial_alpha = transparency_list[transparency_int - 1]
-        # aerial_surface_scaled.set_alpha(aerial_alpha)
-        # gameDisplay.blit(aerial_surface_scaled,(0,0))
-
+        
         # flow surface
         self.flow_surface.set_data(np.transpose(self.flow_array, axes=(1,0,2)))
 
@@ -292,10 +289,10 @@ class Map(object):
             self.prev_surface.set_data(np.transpose(self.prev_array, axes=(1,0,2)))
 
         # aerial image surface
-        if self.sm._aerial_alpha_changed:
-            self.aerial_array[:,:,3] = self.sm.transp # change the alpha
-            self.aerial_surface.set_data(self.aerial_array)
-            self._aerial_alpha_changed = False
+        #    The alpha here gets updated outside the
+        #    loop, in an action in events.py. This is because it only
+        #    happens rarely and checking for the change and reseting on
+        #    every loop was a lot of overhead.
 
         #update area array
         self.AREA_old[:,:] = self.AREA_new[:,:]

@@ -6,7 +6,7 @@ import utils
 class SliderManager(object):
     def __init__(self, gui):
 
-        self._toggle_stream = True
+        # self._toggle_stream = True
 
         widget_color = 'lightgoldenrodyellow'
 
@@ -68,7 +68,7 @@ class SliderManager(object):
         #             'Subsidence rate':'cloud'}
 
         # read the sliders for values
-        self.transp = 10
+        # self.transp = 10
         self.get_all()
         # self.D50 = gui.config.D50
         # self.cong = gui.config.cong
@@ -80,11 +80,11 @@ class SliderManager(object):
         # self.Bbmax = gui.config.Bbmax
         # self.yViewmax = gui.config.yViewmax
 
-    def get_display_options(self):
-        transp0 = self.transp
-        self.transp = (1 - (self.slide_transp.val / 100)) * 255
-        if not self.transp == transp0:
-            self._aerial_alpha_changed = True
+    # def get_display_options(self):
+    #     transp0 = self.transp
+    #     self.transp = (1 - (self.slide_transp.val / 100)) * 255
+    #     if not self.transp == transp0:
+    #         self._aerial_alpha_changed = True
 
     def get_calculation_options(self):
         # self.Bb = self.slide_Bb.val * 1000
@@ -93,5 +93,13 @@ class SliderManager(object):
         
 
     def get_all(self):
-        self.get_display_options()
+        # self.get_display_options()
         self.get_calculation_options()
+
+
+class MiniManager(object):
+    def __init__(self):
+        self._lclicked = False
+        self._rclicked = False
+        self._inax = False
+        self._toggle_stream = True
