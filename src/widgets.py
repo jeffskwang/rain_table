@@ -536,7 +536,7 @@ class TightCheckButtons(AxesWidget):
         lineparams = {'color': 'k', 'linewidth': 1.25,
                       'transform': ax.transAxes, 'solid_capstyle': 'butt'}
         for y, label, active in zip(ys, labels, actives):
-            t = ax.text(0.5, y, label, transform=ax.transAxes,
+            t = ax.text(0.6, y, label, transform=ax.transAxes,
                         horizontalalignment='left',
                         verticalalignment='center')
 

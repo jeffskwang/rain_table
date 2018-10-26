@@ -38,20 +38,16 @@ class GUI(object):
         plt.rcParams['toolbar'] = 'None'
         plt.rcParams['figure.figsize'] = 12, 8
         self.fig = plt.figure()
-        self.map_ax = self.fig.add_axes((0, 0.45, 1, 0.5))
-        self.graph_ax = self.fig.add_axes((0.5, 0.1, 0.45, 0.30))
         self.fig.canvas.set_window_title('SedEdu -- drainage basin simulation')
+        
+        self.map_ax = self.fig.add_axes((0, 0.45, 1, 0.5))
         self.map_ax.get_xaxis().set_visible(False)
         self.map_ax.get_yaxis().set_visible(False)
 
-        # self.fig.subplots()
-        
+        self.graph_ax = self.fig.add_axes((0.5, 0.1, 0.45, 0.30))
         self.graph_ax.set_xlabel("time (hr)")
-        self.graph_ax.set_ylabel("discharge (m3/s)")
-        # plt.ylim(-config.yView, 0.1*config.yView)
-        # plt.xlim(-config.Bb/2, config.Bb/2)
-        # self.map_ax.xaxis.set_major_formatter( plt.FuncFormatter(
-                            # lambda v, x: str(v / 1000).format('%0.0f')) )
+        self.graph_ax.set_ylabel("relative discharge (-)")
+
 
         # add sliders
         self.config = utils.Config
@@ -172,9 +168,10 @@ class Map(object):
 
         #hydrograph gauge location
         self.hydro_y, self.hydro_x = np.unravel_index(self.AREA.argmax(), self.AREA.shape)
-        self.hydro_m = (np.transpose(self.AREA)[self.hydro_x][self.hydro_y]) # self.AREA[self.hydro_y, self.hydro_x]
+        self.hydro_m = 1812 # (np.transpose(self.AREA)[self.hydro_x][self.hydro_y]) # self.AREA[self.hydro_y, self.hydro_x]
         self.hydro_f = 1/600 # hydrograph scaling factor to convert mm/hr per pixel to m3/s
-        self.qw = np.repeat(0.0001, 1000) 
+        self.hydro_nqw = 1000
+        self.qw = np.repeat(0.0001, self.hydro_nqw)
 
         #setup direction array
         self.direction = np.zeros((self.res_width,self.res_height,8),dtype=int)
@@ -199,12 +196,24 @@ class Map(object):
         self.prev_surface = self.map_ax.imshow(np.transpose(self.prev_array, axes=(1,0,2)))
 
         # hydrograph plot artists
-        self.hydrograph, = self.graph_ax.plot(self.qw)
+        
+        self.bfull_line = self.graph_ax.plot([-self.hydro_nqw, self.hydro_nqw*0.1], [1, 1], ls='--', color='k')
+        self.bfull_text = self.graph_ax.text(-self.hydro_nqw*0.9, 1.1, 'bankfull discharge')
+        self.hydrograph, = self.graph_ax.plot(np.linspace(-self.hydro_nqw, 0, self.hydro_nqw), self.qw)
+        self.graph_ax.set_ylim(0, 3)
+        self.graph_ax.set_xlim(-self.hydro_nqw, self.hydro_nqw*0.1)
+
+        # prefill flow array with equilib
+        # self.AREA_old[np.transpose(self.AREA) >= self.baseflow_threshold ] = np.transpose(self.AREA[(self.AREA) >= self.baseflow_threshold ])  
 
         # connect press events
-        mouseon_cid = self.fig.canvas.mpl_connect('button_press_event', lambda e: events.on_click(e, self.mm))
-        mouseoff_cid = self.fig.canvas.mpl_connect('button_release_event', lambda e: events.off_click(e, self.mm))
-        mousemv_cid = self.fig.canvas.mpl_connect('motion_notify_event', lambda e: events.mouse_move(e, self.mm, self.map_ax, self.scale))
+        mouseon_cid  = self.fig.canvas.mpl_connect('button_press_event', 
+                                                   lambda e: events.on_click(e, self.mm))
+        mouseoff_cid = self.fig.canvas.mpl_connect('button_release_event', 
+                                                   lambda e: events.off_click(e, self.mm))
+        mousemv_cid  = self.fig.canvas.mpl_connect('motion_notify_event', 
+                                                   lambda e: events.mouse_move(e, self.mm, 
+                                                   self.map_ax, self.scale))
         
         key_cid = self.fig.canvas.mpl_connect('key_press_event', lambda e: events.on_key(e, self))
 
@@ -221,12 +230,14 @@ class Map(object):
         cloud_changed = self.sm.slide_cloud.on_changed(lambda e: events.slider_set_to(e,
                                                                              self._cloud))
 
+        # stream toggle switch handler
         stream_changed = self.sm.chk_baseflow.on_clicked(lambda e: events.check_switch(e,
                                                                              self._toggle_stream))
 
+
     def __call__(self, i):
 
-        #toggle base_flow
+        # toggle base_flow
         if self._toggle_stream.val:
             self.baseflow_threshold = self.config.baseflowmax - self._baseflow.val + self.config.baseflowstep
             self.AREA_old[np.transpose(self.AREA) >= self.baseflow_threshold ] += 1
@@ -246,7 +257,7 @@ class Map(object):
                 self.prev_array[:,:,2][(self.coordinates[:,:,0] - self.mm._mx) ** 2.0 + (self.coordinates[:,:,1] - self.mm._my) ** 2.0 < self.cloud ** 2.0] = 255
                 self.prev_array[:,:,3][(self.coordinates[:,:,0] - self.mm._mx) ** 2.0 + (self.coordinates[:,:,1] - self.mm._my) ** 2.0 < self.cloud ** 2.0] = 100
 
-        #ROUTE THE RAINFALL
+        # ROUTE THE RAINFALL
         self.AREA_new[ :-1,  :-1] += self.AREA_old[1:  , 1:  ] * self.direction[1:  , 1:  , 0]
         self.AREA_new[ :  ,  :-1] += self.AREA_old[ :  , 1:  ] * self.direction[ :  , 1:  , 1]
         self.AREA_new[1:  ,  :-1] += self.AREA_old[ :-1, 1:  ] * self.direction[ :-1, 1:  , 2]
@@ -256,7 +267,7 @@ class Map(object):
         self.AREA_new[ :  , 1:  ] += self.AREA_old[ :  ,  :-1] * self.direction[ :  ,  :-1, 6]
         self.AREA_new[1:  , 1:  ] += self.AREA_old[ :-1,  :-1] * self.direction[ :-1,  :-1, 7]
         
-        #UPDATE THE FLOW ARRAY
+        # UPDATE THE FLOW ARRAY
         self.flow_array[:,:,:] = 0
         color_factor = (0.75 -  0.75 * np.log(self.AREA_new[self.AREA_new > 0]) / np.log(np.max(self.AREA) + 0.01))
         self.flow_array[:,:,0][self.AREA_new > 0] = 255 * color_factor
@@ -264,11 +275,11 @@ class Map(object):
         self.flow_array[:,:,2][self.AREA_new > 0] = 255
         self.flow_array[:,:,3][self.AREA_new > 0] = 255
 
+        # UPDATE THE HYDROGRAPH
         self.qw[:-1] = self.qw[1:]
-        self.qw[-1] = (self.AREA_new[self.hydro_x][self.hydro_y] / self.hydro_f)
+        self.qw[-1] = ((self.AREA_new[self.hydro_x][self.hydro_y]) / self.hydro_m)
         self.hydrograph.set_ydata(self.qw)
-        self.graph_ax.set_ylim(0,np.max(self.qw)*1.1)
-        
+
         # flow surface
         self.flow_surface.set_data(np.transpose(self.flow_array, axes=(1,0,2)))
 
