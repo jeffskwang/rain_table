@@ -11,8 +11,8 @@ class SliderManager(object):
         widget_color = 'lightgoldenrodyellow'
 
         # inputs of ranges to initialize
-        slide_baseflow_ax = plt.axes([0.075, 0.35, 0.3, 0.05], facecolor=widget_color)
-        self.slide_baseflow = widgets.MinMaxSlider(slide_baseflow_ax, 'baseflow threshold (m$^2$)', 
+        slide_baseflow_ax = plt.axes([0.16, 0.35, 0.215, 0.05], facecolor=widget_color)
+        self.slide_baseflow = widgets.MinMaxSlider(slide_baseflow_ax, 'XXXXXX baseflow threshold (m$^2$)', 
                                         gui.config.baseflowmin, gui.config.baseflowmax, 
                                         valinit=gui.config.baseflowinit, valstep=gui.config.baseflowstep, 
                                         valfmt="%0.0f", transform=gui.map_ax.transAxes)
@@ -29,24 +29,9 @@ class SliderManager(object):
                                         valinit=gui.config.transpinit, valstep=gui.config.transpstep, 
                                         valfmt="%i", transform=gui.map_ax.transAxes)
 
-        # rad_col_ax = plt.axes([0.565, 0.45, 0.225, 0.15], facecolor=widget_color)
-        # self.rad_col = widgets.RadioButtons(rad_col_ax, ('Deposit age', 
-        #                                             'Water discharge',
-        #                                             'Subsidence rate',
-        #                                             'Avulsion number'))
+        chk_baseflow_ax = plt.axes([0.075, 0.35, 0.05, 0.05], facecolor=widget_color)
+        self.chk_baseflow = widgets.TightCheckButtons(chk_baseflow_ax, ('on',), (True,))
         
-        # slide_yView_ax = plt.axes([0.565, 0.345, 0.36, 0.05], facecolor=widget_color)
-        # self.slide_yView = widgets.MinMaxSlider(slide_yView_ax, 'stratigraphic view (m)', 
-        #                                    gui.config.yViewmin, gui.config.yViewmax, 
-        #                                    valinit=gui.config.yViewinit, valstep=gui.config.yViewstep, 
-        #                                    valfmt="%i", transform=gui.map_ax.transAxes)
-
-        # slide_Bb_ax = plt.axes([0.565, 0.24, 0.36, 0.05], facecolor=widget_color)
-        # self.slide_Bb = widgets.MinMaxSlider(slide_Bb_ax, 'Channel belt width (km)', 
-        #                                 gui.config.Bbmin, gui.config.Bbmax, 
-        #                                 valinit=gui.config.Bbinit/1000, valstep=gui.config.Bbstep, 
-        #                                 valfmt="%g", transform=gui.map_ax.transAxes)
-
         # btn_slidereset_ax = plt.axes([0.565, 0.14, 0.2, 0.04])
         # self.btn_slidereset = widgets.NoDrawButton(btn_slidereset_ax, 'Reset sliders', color=widget_color, hovercolor='0.975')
         # # self.btn_slidereset.on_clicked(gui.slide_reset)
@@ -61,30 +46,7 @@ class SliderManager(object):
         # self.btn_pause = widgets.NoDrawButton(btn_pause_ax, 'Pause', color=widget_color, hovercolor='0.975')
         # self.btn_pause.on_clicked(gui.pause_anim)
 
-        # # initialize a few more things
-        # self.col_dict = {'Water discharge': 'baseflow', 
-        #             'Avulsion number': 'avul',
-        #             'Deposit age': 'age',
-        #             'Subsidence rate':'cloud'}
-
-        # read the sliders for values
-        # self.transp = 10
         self.get_all()
-        # self.D50 = gui.config.D50
-        # self.cong = gui.config.cong
-        # self.Rep = gui.config.Rep
-        # self.dt = gui.config.dt
-        # self.Df = gui.config.Df
-        # self.Bast = gui.config.Bast
-        # self.dxdtstd = gui.config.dxdtstd
-        # self.Bbmax = gui.config.Bbmax
-        # self.yViewmax = gui.config.yViewmax
-
-    # def get_display_options(self):
-    #     transp0 = self.transp
-    #     self.transp = (1 - (self.slide_transp.val / 100)) * 255
-    #     if not self.transp == transp0:
-    #         self._aerial_alpha_changed = True
 
     def get_calculation_options(self):
         # self.Bb = self.slide_Bb.val * 1000

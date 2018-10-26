@@ -4,7 +4,8 @@ module to provide customized versions of the matplotlib widgets
 
 import numpy as np
 from matplotlib.widgets import AxesWidget
-from matplotlib.patches import Circle
+from matplotlib.patches import Circle, Rectangle
+from matplotlib.lines import Line2D
 import six
 
 class MinMaxSlider(AxesWidget):
@@ -459,6 +460,146 @@ class RadioButtons(AxesWidget):
             return
         for cid, func in self.observers.items():
             func(self.labels[index].get_text())
+
+    def on_clicked(self, func):
+        """
+        When the button is clicked, call *func* with button label
+        A connection id is returned which can be used to disconnect
+        """
+        cid = self.cnt
+        self.observers[cid] = func
+        self.cnt += 1
+        return cid
+
+    def disconnect(self, cid):
+        """remove the observer with connection id *cid*"""
+        try:
+            del self.observers[cid]
+        except KeyError:
+            pass
+
+
+class TightCheckButtons(AxesWidget):
+    """
+    A GUI neutral set of check buttons.
+    For the check buttons to remain responsive you must keep a
+    reference to this object.
+    The following attributes are exposed
+     *ax*
+        The :class:`matplotlib.axes.Axes` instance the buttons are
+        located in
+     *labels*
+        List of :class:`matplotlib.text.Text` instances
+     *lines*
+        List of (line1, line2) tuples for the x's in the check boxes.
+        These lines exist for each box, but have ``set_visible(False)``
+        when its box is not checked.
+     *rectangles*
+        List of :class:`matplotlib.patches.Rectangle` instances
+    Connect to the CheckButtons with the :meth:`on_clicked` method
+    """
+    def __init__(self, ax, labels, actives=None):
+        """
+        Add check buttons to :class:`matplotlib.axes.Axes` instance *ax*
+        Parameters
+        ----------
+        ax : `~matplotlib.axes.Axes`
+            The parent axes for the widget.
+        labels : List[str]
+            The labels of the check buttons.
+        actives : List[bool], optional
+            The initial check states of the buttons. The list must have the
+            same length as *labels*. If not given, all buttons are unchecked.
+        """
+        AxesWidget.__init__(self, ax)
+
+        ax.set_xticks([])
+        ax.set_yticks([])
+        ax.set_navigate(False)
+
+        if actives is None:
+            actives = [False] * len(labels)
+
+        if len(labels) > 1:
+            dy = 1. / (len(labels) + 1)
+            ys = np.linspace(1 - dy, dy, len(labels))
+        else:
+            dy = 0.75
+            ys = [0.5]
+
+        axcolor = ax.get_facecolor()
+
+        self.labels = []
+        self.lines = []
+        self.rectangles = []
+
+        lineparams = {'color': 'k', 'linewidth': 1.25,
+                      'transform': ax.transAxes, 'solid_capstyle': 'butt'}
+        for y, label, active in zip(ys, labels, actives):
+            t = ax.text(0.5, y, label, transform=ax.transAxes,
+                        horizontalalignment='left',
+                        verticalalignment='center')
+
+            w, h = dy / 2, dy * 0.8
+            x, y = 0.05, y - h / 2
+
+            p = Rectangle(xy=(x, y), width=w, height=h, edgecolor='black',
+                          facecolor=axcolor, transform=ax.transAxes)
+
+            l1 = Line2D([x, x + w], [y + h, y], **lineparams)
+            l2 = Line2D([x, x + w], [y, y + h], **lineparams)
+
+            l1.set_visible(active)
+            l2.set_visible(active)
+            self.labels.append(t)
+            self.rectangles.append(p)
+            self.lines.append((l1, l2))
+            ax.add_patch(p)
+            ax.add_line(l1)
+            ax.add_line(l2)
+
+        self.connect_event('button_press_event', self._clicked)
+
+        self.cnt = 0
+        self.observers = {}
+
+    def _clicked(self, event):
+        if self.ignore(event) or event.button != 1 or event.inaxes != self.ax:
+            return
+        for i, (p, t) in enumerate(zip(self.rectangles, self.labels)):
+            if (t.get_window_extent().contains(event.x, event.y) or
+                    p.get_window_extent().contains(event.x, event.y)):
+                self.set_active(i)
+                break
+
+    def set_active(self, index):
+        """
+        Directly (de)activate a check button by index.
+        *index* is an index into the original label list
+            that this object was constructed with.
+            Raises ValueError if *index* is invalid.
+        Callbacks will be triggered if :attr:`eventson` is True.
+        """
+        if 0 > index >= len(self.labels):
+            raise ValueError("Invalid CheckButton index: %d" % index)
+
+        l1, l2 = self.lines[index]
+        l1.set_visible(not l1.get_visible())
+        l2.set_visible(not l2.get_visible())
+
+        if self.drawon:
+            self.ax.figure.canvas.draw()
+
+        if not self.eventson:
+            return
+        for cid, func in self.observers.items():
+            func(self.labels[index].get_text())
+
+    def get_status(self):
+        """
+        returns a tuple of the status (True/False) of all of the check buttons
+        """
+        return [l1.get_visible() for (l1, l2) in self.lines]
 
     def on_clicked(self, func):
         """

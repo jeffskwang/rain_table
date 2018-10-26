@@ -37,19 +37,17 @@ class GUI(object):
         # setup the figure
         plt.rcParams['toolbar'] = 'None'
         plt.rcParams['figure.figsize'] = 12, 8
-        # self.fig, (self.map_ax, self.graph_ax) = plt.subplots(2, 1)
         self.fig = plt.figure()
         self.map_ax = self.fig.add_axes((0, 0.45, 1, 0.5))
         self.graph_ax = self.fig.add_axes((0.5, 0.1, 0.45, 0.30))
-        # plt.subplots_adjust(left=0, top=1, right=1, bottom=0.45)
         self.fig.canvas.set_window_title('SedEdu -- drainage basin simulation')
         self.map_ax.get_xaxis().set_visible(False)
         self.map_ax.get_yaxis().set_visible(False)
 
         # self.fig.subplots()
         
-        # self.map_ax.set_xlabel("channel belt (km)")
-        # self.map_ax.set_ylabel("stratigraphy (m)")
+        self.graph_ax.set_xlabel("time (hr)")
+        self.graph_ax.set_ylabel("discharge (m3/s)")
         # plt.ylim(-config.yView, 0.1*config.yView)
         # plt.xlim(-config.Bb/2, config.Bb/2)
         # self.map_ax.xaxis.set_major_formatter( plt.FuncFormatter(
@@ -91,7 +89,7 @@ class GUI(object):
 class Map(object):
     def __init__(self, gui):
 
-        # add_ax
+
         self.gui = gui
         self.fig = gui.fig
         self.map_ax = gui.map_ax
@@ -101,11 +99,13 @@ class Map(object):
         self.sm.get_all()
         self.mm = MiniManager() # handles some switch params
 
+
         ############################
         ###PARAMETERS###
         ############################
         #scale of screen_res / DEM_res
         self.scale = 3
+
 
 
         ############################
@@ -142,11 +142,11 @@ class Map(object):
         self.DIR[self.DIR==128] = 2 
         self.DIR[self.DIR==16] = 3
 
+
+
         ############################
         ###INITIALIZATION###
         ############################
-        
-
       
         #threshold for channelization
         self._baseflow = SliderVal(self.sm.baseflow)
@@ -155,22 +155,10 @@ class Map(object):
         # cloud sizes
         self._cloud = SliderVal(self.config.cloudinit)
 
-        #define a base flow to scale hydrograph
-        # self._baseflow = ##
-        
-        
-
-
         #aerial photo
         self.aerial_image = Image.open(os.path.join(self.priv_path, 'aerial.png'))
         self.aerial_array = np.array(self.aerial_image)
         self.aerial_array[:, :, 3] = (1 - (self.config.transpinit / 100)) * 255
-        # self._aerial_alpha_changed = False
-      
-        #contols
-        # controls_surface = pygame.image.load(os.path.join(priv_path, 'rain_table_controls.png'))
-        # controls_surface_scaled  = pygame.transform.scale(controls_surface,(int(res_height * scale * 0.5),int(res_height * scale * 0.5)))
-        # gameDisplay.blit(controls_surface_scaled,(res_width*scale - int(res_height*scale * 0.5),res_height*scale))
 
         ############################
         ###ARRAYS###
@@ -181,22 +169,11 @@ class Map(object):
         self.AREA_old = np.zeros((self.res_width,self.res_height),dtype=int)
         self.AREA_new = np.zeros((self.res_width,self.res_height),dtype=int)
 
-        #hydrograph plot
-        # self.plot_hydro = np.zeros((int(self.res_width * self.scale)-int(self.res_height*0.5*self.scale),int(self.res_height*0.5*self.scale),3),dtype=int)
-
-        #hyrograph arrays
-        # self.t = np.linspace(-100.,0.0,1001)
-        # self.Q = np.zeros(1001)
-
         #hydrograph gauge location
         self.hydro_y, self.hydro_x = np.unravel_index(self.AREA.argmax(), self.AREA.shape)
-        self.hydro_m = 2500. # self.AREA[self.hydro_y, self.hydro_x]
-        self.qw = np.repeat((self.AREA_new[self.hydro_x][self.hydro_y]) / self.hydro_m, 1000)
-        # print(self.hydro_m)
-
-
-        #predifined area thresholds
-        # self.baseflow_threshold_list = np.concatenate((np.zeros(1),np.logspace(0,np.log10(np.max(self.AREA)),29)),axis=0)
+        self.hydro_m = (np.transpose(self.AREA)[self.hydro_x][self.hydro_y]) # self.AREA[self.hydro_y, self.hydro_x]
+        self.hydro_f = 1/600 # hydrograph scaling factor to convert mm/hr per pixel to m3/s
+        self.qw = np.repeat(0.0001, 1000) 
 
         #setup direction array
         self.direction = np.zeros((self.res_width,self.res_height,8),dtype=int)
@@ -278,24 +255,14 @@ class Map(object):
         
         #UPDATE THE FLOW ARRAY
         self.flow_array[:,:,:] = 0
-        self.flow_array[:,:,0][self.AREA_new > 0] = 255 * (0.75 -  0.75 * np.log(self.AREA_new[self.AREA_new > 0]) / np.log(np.max(self.AREA) + 0.01))
-        self.flow_array[:,:,1][self.AREA_new > 0] = 255 * (0.75 -  0.75 * np.log(self.AREA_new[self.AREA_new > 0]) / np.log(np.max(self.AREA) + 0.01))
+        color_factor = (0.75 -  0.75 * np.log(self.AREA_new[self.AREA_new > 0]) / np.log(np.max(self.AREA) + 0.01))
+        self.flow_array[:,:,0][self.AREA_new > 0] = 255 * color_factor
+        self.flow_array[:,:,1][self.AREA_new > 0] = 255 * color_factor
         self.flow_array[:,:,2][self.AREA_new > 0] = 255
         self.flow_array[:,:,3][self.AREA_new > 0] = 255
 
-        #HYDROGRAPH
-        # frame_number +=1
-        # if plot_every_frame <= frame_number:
-            # frame_number = 0
-            # Q[:-1] = Q[1:]
-            # Q[-1] = float(AREA_new[hydro_x][hydro_y]) / float(base_flow)
-            # plot_hydro = plot_setup(plot_hydro,t,Q,r'$t$ [$T$]',r'$Q/Q_b$ [$L^3/T$]',np.max(AREA)/base_flow)
-            # plot_to_surface = pygame.surfarray.make_surface(plot_hydro)
-            # gameDisplay.blit(plot_to_surface,(0,res_height*scale))
-
-        # print(float(self.AREA_old[self.hydro_x][self.hydro_y]))
         self.qw[:-1] = self.qw[1:]
-        self.qw[-1] = (self.AREA_new[self.hydro_x][self.hydro_y]) / self.hydro_m
+        self.qw[-1] = (self.AREA_new[self.hydro_x][self.hydro_y] / self.hydro_f)
         self.hydrograph.set_ydata(self.qw)
         self.graph_ax.set_ylim(0,np.max(self.qw)*1.1)
         
@@ -320,73 +287,6 @@ class Map(object):
                self.flow_surface, self.prev_surface, self.hydrograph
 
 
-
-
-############################
-###PYGAME###
-############################
-
-#initialize pygame
-# x = pygame.init()
-
-#make game display
-# gameDisplay = pygame.display.set_mode((scale*res_width,int(scale*res_height * 1.5)))
-
-#set title of game
-# pygame.display.set_caption('SedEdu -- Drainage basins')
-
-#update screen
-# pygame.display.update()
-
-#set gameExit to false to enter the main loop
-# gameExit = False
-
-#set clock for framerate lock
-# clock = pygame.time.Clock()
-
-
-
-############################
-###MAIN LOOP###
-############################
-# while not gameExit:
-    #event handler (temp event) use pygame events, e.g. contains mouse data, keyboard presses
-    # for event in pygame.event.get():
-    #     #quit and leave the loop
-    #     if event.type == pygame.QUIT:
-    #         gameExit = True
-
-    # #mouse location
-    # (x_mouse,y_mouse) = pygame.mouse.get_pos()
-
-
-
-    # if event.type == pygame.KEYUP:
-    #     if event.key == pygame.K_SPACE:
-    #         key_down = 0
-    #     if event.key == pygame.K_UP:
-    #         key_down = 0
-    #     if event.key == pygame.K_DOWN:
-    #         key_down = 0
-    #     if event.key == pygame.K_LEFT:
-    #         key_down = 0
-    #     if event.key == pygame.K_RIGHT:
-    #         key_down = 0
-    
-    # #mouse pressed
-    # if pygame.mouse.get_pressed()[0]:
-    #     AREA_old[(coordinates[:,:,0] - x_mouse) ** 2.0 + (coordinates[:,:,1] - y_mouse) ** 2.0 < rad ** 2.0] += 1
-
-
-    
-    #update screen
-    # pygame.display.update()
-    # clock.tick(f_rate)      
-            
-
-#unintialize and quit pygame
-# pygame.quit()
-# quit()
 
 class Runner(object):
     def __init__(self):
