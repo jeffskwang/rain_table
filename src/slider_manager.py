@@ -11,19 +11,19 @@ class SliderManager(object):
         widget_color = 'lightgoldenrodyellow'
 
         # inputs of ranges to initialize
-        slide_baseflow_ax = plt.axes([0.075, 0.35, 0.36, 0.05], facecolor=widget_color)
+        slide_baseflow_ax = plt.axes([0.075, 0.35, 0.3, 0.05], facecolor=widget_color)
         self.slide_baseflow = widgets.MinMaxSlider(slide_baseflow_ax, 'baseflow discharge (m$^3$/s)', 
                                         gui.config.baseflowmin, gui.config.baseflowmax, 
                                         valinit=gui.config.baseflowinit, valstep=gui.config.baseflowstep, 
                                         valfmt="%0.0f", transform=gui.map_ax.transAxes)
 
-        slide_cloud_ax = plt.axes([0.075, 0.225, 0.36, 0.05], facecolor=widget_color)
+        slide_cloud_ax = plt.axes([0.075, 0.225, 0.3, 0.05], facecolor=widget_color)
         self.slide_cloud = widgets.MinMaxSlider(slide_cloud_ax, 'cloud radius (km)', 
                                          gui.config.cloudmin, gui.config.cloudmax, 
                                          valinit=gui.config.cloudinit, valstep=gui.config.cloudstep, 
                                          valfmt="%g", transform=gui.map_ax.transAxes)
 
-        slide_transp_ax = plt.axes([0.075, 0.1, 0.36, 0.05], facecolor=widget_color)
+        slide_transp_ax = plt.axes([0.075, 0.1, 0.3, 0.05], facecolor=widget_color)
         self.slide_transp = widgets.MinMaxSlider(slide_transp_ax, 'image transparency (%)', 
                                         gui.config.transpmin, gui.config.transpmax, 
                                         valinit=gui.config.transpinit, valstep=gui.config.transpstep, 

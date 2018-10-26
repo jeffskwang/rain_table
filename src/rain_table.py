@@ -37,11 +37,16 @@ class GUI(object):
         # setup the figure
         plt.rcParams['toolbar'] = 'None'
         plt.rcParams['figure.figsize'] = 12, 8
-        self.fig, self.map_ax = plt.subplots()
-        plt.subplots_adjust(left=0, top=1, right=1, bottom=0.45)
+        # self.fig, (self.map_ax, self.graph_ax) = plt.subplots(2, 1)
+        self.fig = plt.figure()
+        self.map_ax = self.fig.add_axes((0, 0.45, 1, 0.5))
+        self.graph_ax = self.fig.add_axes((0.5, 0.1, 0.45, 0.30))
+        # plt.subplots_adjust(left=0, top=1, right=1, bottom=0.45)
         self.fig.canvas.set_window_title('SedEdu -- drainage basin simulation')
         self.map_ax.get_xaxis().set_visible(False)
         self.map_ax.get_yaxis().set_visible(False)
+
+        # self.fig.subplots()
         
         # self.map_ax.set_xlabel("channel belt (km)")
         # self.map_ax.set_ylabel("stratigraphy (m)")
@@ -94,12 +99,7 @@ class Map(object):
         self.config = gui.config
         self.sm = gui.sm
         self.sm.get_all()
-        self.mm = MiniManager()
-
-        # self._rclicked = False
-        # self._lclicked = False
-        # self._inax = False
-        # self._toggle_stream = self.config._toggle_stream
+        self.mm = MiniManager() # handles some switch params
 
         ############################
         ###PARAMETERS###
@@ -155,8 +155,8 @@ class Map(object):
         # cloud sizes
         self._cloud = SliderVal(self.config.cloudinit)
 
-        #define print(event.key)a base flow to scale hydrograph
-        # self.base_flow = 2539
+        #define a base flow to scale hydrograph
+        self.base_flow = 2539
 
         #hydrograph gauge location
         self.y_hydro, self.x_hydro = np.unravel_index(self.AREA.argmax(), self.AREA.shape)
@@ -205,9 +205,6 @@ class Map(object):
 
         #DEM array
         self.DEM_array[:,:] = (np.transpose(self.DEM) - self.min_ele) / (self.max_ele - self.min_ele) * 255
-        # self.DEM_array[:,:,1] = (np.transpose(self.DEM) - self.min_ele) / (self.max_ele - self.min_ele) * 255
-        # self.DEM_array[:,:,2] = (np.transpose(self.DEM) - self.min_ele) / (self.max_ele - self.min_ele) * 255
-
 
         #DEM surface artists for plotting
         self.DEM_cmap = utils.terrain_cmap()
