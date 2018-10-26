@@ -52,8 +52,6 @@ def off_click(event, mm):
 def mouse_move(event, mm, map_ax, scale):
 
     x, y = event.xdata, event.ydata
-    # print(event.inaxes)
-    # print(m.map_ax)
 
     if event.inaxes == map_ax:
         mm._mx, mm._my = x * scale, y * scale
@@ -62,8 +60,13 @@ def mouse_move(event, mm, map_ax, scale):
         mm._mx, mm._my = x, y
         mm._inax = False
 
-def transp_slider_action(event, aerial_array, newval, aerial_surface):
+
+def transp_slider_action(event, aerial_array, aerial_surface):
     newval = (1 - (event / 100)) * 255
     aerial_array[:,:,3] = newval # change the alpha
     aerial_surface.set_data(aerial_array)
-    # m._aerial_alpha_changed = False
+
+
+def slider_set_to(event, to_set):
+    # generic setter for SliderVal class value holders
+    to_set.val = event

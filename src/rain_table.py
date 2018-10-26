@@ -20,7 +20,7 @@ import utils
 from PIL import Image
 
 import widgets
-from slider_manager import SliderManager, MiniManager
+from slider_manager import SliderManager, MiniManager, SliderVal
 
 class GUI(object):
 
@@ -149,7 +149,11 @@ class Map(object):
 
       
         #threshold for channelization
-        self.baseflow_threshold = self.config.baseflowmax - self.sm.baseflow
+        self._baseflow = SliderVal(self.sm.baseflow)
+        self.baseflow_threshold = self.config.baseflowmax - self._baseflow.val
+
+        # cloud sizes
+        self._cloud = SliderVal(self.config.cloudinit)
 
         #define print(event.key)a base flow to scale hydrograph
         # self.base_flow = 2539
@@ -223,32 +227,34 @@ class Map(object):
         # dedicated action for transparency slider
         transp_changed = self.sm.slide_transp.on_changed(lambda e: events.transp_slider_action(e,
                                                                              self.aerial_array,
-                                                                             self.sm.slide_transp.val,
                                                                              self.aerial_surface))
 
+        # dedicated action for baseflow slider
+        baseflow_changed = self.sm.slide_baseflow.on_changed(lambda e: events.slider_set_to(e,
+                                                                             self._baseflow))
+
+        # dedicated action for cloud slider
+        cloud_changed = self.sm.slide_cloud.on_changed(lambda e: events.slider_set_to(e,
+                                                                             self._cloud))
 
 
     def __call__(self, i):
 
-
-        # grab the values from the sliders
-        self.sm.get_all()
-
         #toggle base_flow
         if self.mm._toggle_stream:
-            self.baseflow_threshold = self.config.baseflowmax - self.sm.baseflow + self.config.baseflowstep
+            self.baseflow_threshold = self.config.baseflowmax - self._baseflow.val + self.config.baseflowstep
             self.AREA_old[np.transpose(self.AREA) >= self.baseflow_threshold ] += 1
 
         # mouse_move   
         if self.mm._lclicked:
             if self.mm._inax:
-                self.cloud = self.sm.cloud
+                self.cloud = self._cloud.val
                 self.AREA_old[(self.coordinates[:,:,0] - self.mm._mx) ** 2.0 + (self.coordinates[:,:,1] - self.mm._my) ** 2.0 < self.cloud ** 2.0] += 1
 
         self.prev_array[:,:,:] = 0
         if self.mm._rclicked:
             if self.mm._inax:
-                self.cloud = self.sm.cloud
+                self.cloud = self._cloud.val
                 self.prev_array[:,:,0][(self.coordinates[:,:,0] - self.mm._mx) ** 2.0 + (self.coordinates[:,:,1] - self.mm._my) ** 2.0 < self.cloud ** 2.0] = 150
                 self.prev_array[:,:,1][(self.coordinates[:,:,0] - self.mm._mx) ** 2.0 + (self.coordinates[:,:,1] - self.mm._my) ** 2.0 < self.cloud ** 2.0] = 150
                 self.prev_array[:,:,2][(self.coordinates[:,:,0] - self.mm._mx) ** 2.0 + (self.coordinates[:,:,1] - self.mm._my) ** 2.0 < self.cloud ** 2.0] = 255
@@ -378,8 +384,7 @@ class Runner(object):
         gui.map = Map(gui)
 
         anim = animation.FuncAnimation(gui.fig, gui.map, 
-                                       interval=10, blit=True,
-                                       save_count=None)
+                                       interval=10, blit=True)
 
         plt.show()
 
