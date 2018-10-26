@@ -12,7 +12,7 @@ class SliderManager(object):
 
         # inputs of ranges to initialize
         slide_baseflow_ax = plt.axes([0.075, 0.35, 0.3, 0.05], facecolor=widget_color)
-        self.slide_baseflow = widgets.MinMaxSlider(slide_baseflow_ax, 'baseflow discharge (m$^3$/s)', 
+        self.slide_baseflow = widgets.MinMaxSlider(slide_baseflow_ax, 'baseflow threshold (m$^2$)', 
                                         gui.config.baseflowmin, gui.config.baseflowmax, 
                                         valinit=gui.config.baseflowinit, valstep=gui.config.baseflowstep, 
                                         valfmt="%0.0f", transform=gui.map_ax.transAxes)

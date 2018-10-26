@@ -75,7 +75,6 @@ class GUI(object):
 
         self.config._toggle_stream = True
 
-
         self.sm = SliderManager(self)
 
 
@@ -96,6 +95,7 @@ class Map(object):
         self.gui = gui
         self.fig = gui.fig
         self.map_ax = gui.map_ax
+        self.graph_ax = gui.graph_ax
         self.config = gui.config
         self.sm = gui.sm
         self.sm.get_all()
@@ -156,10 +156,10 @@ class Map(object):
         self._cloud = SliderVal(self.config.cloudinit)
 
         #define a base flow to scale hydrograph
-        self.base_flow = 2539
+        # self._baseflow = ##
+        
+        
 
-        #hydrograph gauge location
-        self.y_hydro, self.x_hydro = np.unravel_index(self.AREA.argmax(), self.AREA.shape)
 
         #aerial photo
         self.aerial_image = Image.open(os.path.join(self.priv_path, 'aerial.png'))
@@ -185,8 +185,15 @@ class Map(object):
         # self.plot_hydro = np.zeros((int(self.res_width * self.scale)-int(self.res_height*0.5*self.scale),int(self.res_height*0.5*self.scale),3),dtype=int)
 
         #hyrograph arrays
-        self.t = np.linspace(-100.,0.0,1001)
-        self.Q = np.zeros(1001)
+        # self.t = np.linspace(-100.,0.0,1001)
+        # self.Q = np.zeros(1001)
+
+        #hydrograph gauge location
+        self.hydro_y, self.hydro_x = np.unravel_index(self.AREA.argmax(), self.AREA.shape)
+        self.hydro_m = 2500. # self.AREA[self.hydro_y, self.hydro_x]
+        self.qw = np.repeat((self.AREA_new[self.hydro_x][self.hydro_y]) / self.hydro_m, 1000)
+        # print(self.hydro_m)
+
 
         #predifined area thresholds
         # self.baseflow_threshold_list = np.concatenate((np.zeros(1),np.logspace(0,np.log10(np.max(self.AREA)),29)),axis=0)
@@ -213,6 +220,8 @@ class Map(object):
         self.flow_surface = self.map_ax.imshow(np.transpose(self.flow_array, axes=(1,0,2)))
         self.prev_surface = self.map_ax.imshow(np.transpose(self.prev_array, axes=(1,0,2)))
 
+        # hydrograph plot artists
+        self.hydrograph, = self.graph_ax.plot(self.qw)
 
         # connect press events
         mouseon_cid = self.fig.canvas.mpl_connect('button_press_event', lambda e: events.on_click(e, self.mm))
@@ -279,10 +288,16 @@ class Map(object):
         # if plot_every_frame <= frame_number:
             # frame_number = 0
             # Q[:-1] = Q[1:]
-            # Q[-1] = float(AREA_new[x_hydro][y_hydro]) / float(base_flow)
+            # Q[-1] = float(AREA_new[hydro_x][hydro_y]) / float(base_flow)
             # plot_hydro = plot_setup(plot_hydro,t,Q,r'$t$ [$T$]',r'$Q/Q_b$ [$L^3/T$]',np.max(AREA)/base_flow)
             # plot_to_surface = pygame.surfarray.make_surface(plot_hydro)
             # gameDisplay.blit(plot_to_surface,(0,res_height*scale))
+
+        # print(float(self.AREA_old[self.hydro_x][self.hydro_y]))
+        self.qw[:-1] = self.qw[1:]
+        self.qw[-1] = (self.AREA_new[self.hydro_x][self.hydro_y]) / self.hydro_m
+        self.hydrograph.set_ydata(self.qw)
+        self.graph_ax.set_ylim(0,np.max(self.qw)*1.1)
         
         # flow surface
         self.flow_surface.set_data(np.transpose(self.flow_array, axes=(1,0,2)))
@@ -302,7 +317,7 @@ class Map(object):
         self.AREA_new[:,:] = 0
 
         return self.DEM_surface, self.aerial_surface, \
-               self.flow_surface, self.prev_surface
+               self.flow_surface, self.prev_surface, self.hydrograph
 
 
 
@@ -384,6 +399,11 @@ class Runner(object):
                                        interval=10, blit=True)
 
         plt.show()
+
+        # plt.figure()
+        # plt.imshow(gui.map.AREA)
+        # plt.show()
+
 
 
 
