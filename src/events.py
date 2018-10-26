@@ -3,8 +3,14 @@ import matplotlib.pyplot as plt
 
 def on_key(event, m):
 
-    if event.key == ' ':
-        m.mm._toggle_stream = not m.mm._toggle_stream
+    if event.key == ' ':        
+        m.sm.chk_baseflow.set_active(0)
+        if m.sm.chk_baseflow.get_status()[0]:
+            m._toggle_stream.val = True
+        else:            
+            m._toggle_stream.val = False
+
+
     
     elif event.key == 'up':
         m.sm.slide_cloud.increase_val()
@@ -70,3 +76,6 @@ def transp_slider_action(event, aerial_array, aerial_surface):
 def slider_set_to(event, to_set):
     # generic setter for SliderVal class value holders
     to_set.val = event
+
+def check_switch(event, to_set):
+    to_set.val = not to_set.val

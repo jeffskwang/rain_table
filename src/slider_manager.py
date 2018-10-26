@@ -59,7 +59,8 @@ class SliderManager(object):
         self.get_calculation_options()
 
 
-class SliderVal(object):
+class Val(object):
+    """generic value holder"""
     def __init__(self, val):
         self.val = val
 
@@ -68,5 +69,5 @@ class MiniManager(object):
         self._lclicked = False
         self._rclicked = False
         self._inax = False
-        self._toggle_stream = True
+        # self._toggle_stream = True
         self._baseflow = 2000

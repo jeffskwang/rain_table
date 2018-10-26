@@ -20,7 +20,7 @@ import utils
 from PIL import Image
 
 import widgets
-from slider_manager import SliderManager, MiniManager, SliderVal
+from slider_manager import SliderManager, MiniManager, Val
 
 class GUI(object):
 
@@ -71,7 +71,7 @@ class GUI(object):
         self.config.transpinit = 20
         self.config.transpstep = 10
 
-        self.config._toggle_stream = True
+        # self.config._toggle_stream = True
 
         self.sm = SliderManager(self)
 
@@ -149,11 +149,12 @@ class Map(object):
         ############################
       
         #threshold for channelization
-        self._baseflow = SliderVal(self.sm.baseflow)
+        self._toggle_stream = Val(True)
+        self._baseflow = Val(self.sm.baseflow)
         self.baseflow_threshold = self.config.baseflowmax - self._baseflow.val
 
         # cloud sizes
-        self._cloud = SliderVal(self.config.cloudinit)
+        self._cloud = Val(self.config.cloudinit)
 
         #aerial photo
         self.aerial_image = Image.open(os.path.join(self.priv_path, 'aerial.png'))
@@ -220,11 +221,13 @@ class Map(object):
         cloud_changed = self.sm.slide_cloud.on_changed(lambda e: events.slider_set_to(e,
                                                                              self._cloud))
 
+        stream_changed = self.sm.chk_baseflow.on_clicked(lambda e: events.check_switch(e,
+                                                                             self._toggle_stream))
 
     def __call__(self, i):
 
         #toggle base_flow
-        if self.mm._toggle_stream:
+        if self._toggle_stream.val:
             self.baseflow_threshold = self.config.baseflowmax - self._baseflow.val + self.config.baseflowstep
             self.AREA_old[np.transpose(self.AREA) >= self.baseflow_threshold ] += 1
 
