@@ -7,7 +7,7 @@
     "license": "MIT",
     "projurl": "[hosted on GitHub](https://github.com/sededu/rain_table)",
     "projreadme": ["README.md"],
-    "exec": ["source", "rain_table.py"],
+    "exec": ["rain_table", "rain_table.py"],
     "docloc": ["doc"],
     "doclist": {
     	"empty.txt": "A blank textfile"

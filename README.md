@@ -2,61 +2,129 @@
 
 Interactive rain table model written by Jeffrey Kwang at UIUC.
 
+<img src="https://github.com/sededu/rain_table/blob/master/private/rain_table_demo.gif" alt="demo_gif">
 
-## Installing
 
-This repository contains 3 files. In order to run the model (`rain_table.py`), python 2.7 needs to be installed along with the library pygame (https://www.pygame.org).
+The version in this (SedEdu) repository is different than the original by Jeffrey.
+This version retains most of the functionality, but does not rely on the Pygame dependency.
+The cost is that this simulation runs a little bit slower, but is still fast enough to be fun.
+[See Jeffrey's original implementation at here.](https://github.com/jeffskwang/rain_table)
 
-For example, Python 2.7 can be installed with the anaconda pacakge (https://www.anaconda.com/download/) or Python(x,y) (https://python-xy.github.io/downloads.html). 
+This repository is also linked into the [SedEdu suite of education modules](https://github.com/sededu/sededu), and can be accessed there as well.
 
-Note that the model has been tested with Python 3 and runs, but is only rigorously tested with Python 2.7.
 
-After python is installed, `pygame` can be installed via the cmd prompt or linux terminal. Use `pip install pygame`.
+## About the model
 
-You can download this entire repository as a `.zip` by clicking the "Clone or download button on this page", or by [clicking here](https://github.com/jeffskwang/rain_table/archive/master.zip) to get a `.zip` folder. Unzip the folder in your preferred location.
+The model uses a D8 routing scheme to route rainfall over the surface of a DEM.
+All flow is assumed to be surface runoff.
+The hydrograph is scaled to the maximum baseflow equilibrium condition. 
+These watersheds drain directly into the Columbia River in Washington state, (Lat 47°10'03.8"N, Lon 120°07'31.9"W).
 
-If you have installed `git` and are comfortable working with it, you can simply clone the repository to your preferred location.
 
+
+## Installing the module
+
+
+
+This module depends on Python 3, `tkinter`, and the Python packages `numpy`, and `matplotlib`. 
+
+
+
+### Installing Python 3
+
+If you are new to Python, it is recommended that you install Anaconda, which is an open source distribution of Python which includes many basic scientific libraries, some of which are used in the module. 
+Anaconda can be downloaded at https://www.anaconda.com/download/ for Windows, macOS, and Linux. 
+If you do not have storage space on your machine for Anaconda or wish to install a smaller version of Python for another reason, see below on options for Miniconda or vanilla Python.
+
+1. Visit the website for Anaconda https://www.anaconda.com/download/ and select the installer for your operating system.
+__Be sure to select the Python 3.x installation.__
+2. Start the installer.
+3. If prompted, select to "install just for me", unless you know what you are doing.
+4. When prompted to add Anaconda to the path during installation, select _yes_ if you __know__ you do not have any other Python installed on your computer; otherwise select _no_.
+
+See below for detailed instructions on installing `rain_table` for your operating system.
+
+
+### Installing the module
+
+If you installed Anaconda Python or Miniconda, you can follow the instructions below for your operating system. 
+Otherwise see the instructions for PyPi installation below.
+
+__Please__ [open an issue](https://github.com/sededu/rain_table/issues) if you encounter any troubles installing or any error messages along the way! 
+Please include 1) operating system, 2) installation method, and 3) copy-paste the error.
+
+
+#### Windows users
+
+1. Open your "start menu" and search for the "Anaconda prompt"; start this application.
+
+2. Install with the module type the following command and hit "enter":
 ```
-https://github.com/jeffskwang/rain_table.git
+conda install -c sededu rain_table
+```
+If asked to proceed, type `Y` and press "enter" to continue installation. 
+3. This process may take a few minutes as the necessary source code is downloaded.
+If the installation succeeds, proceed below to the "Run the module" section.
+
+__Note on permissions:__ you may need to run as administrator on Windows.
+
+
+#### Mac OSX and Linux users
+
+__Linux users:__ you will need to also install `tkinter` before trying to install the module below package through `conda` or `pip3`.
+On Ubuntu this is done with `sudo apt install python3-tk`.
+<!-- Windows and Mac distributions should come with `python3-tk` installed. -->
+
+1. Install the module by opening a terminal and typing the following command.
+```
+conda install -c sededu rain_table
+```
+If asked to proceed, type `Y` and press enter to continue installation.
+
+2. This process may take a few minutes as the necessary source code is downloaded.
+If the installation succeeds, proceed below to the "Run the module" section.
+
+__Note on permissions:__ you may need to use `sudo` on OSX and Linux.
+
+
+#### Advanced user installations
+To install with `pip` from Pypi use (not recommended for entry-level users):
+```
+pip3 install pyqt rain_table
 ```
 
+See below instructions for downloading the source code if you wish to be able to modify the source code for development or for exploration.
 
-## Running
 
-To run the model, you can use:
+### Run the module
+
+1. Open a Python shell by typing `python` (or `python3`) at the terminal (OSX and Linux users) or at the Conda or Command Prompt (Windows users).
+2. Run the module from the Python shell with:
 ```
-python <path-to-repository>/run_rain_table.py
+import rain_table
+```
+Instructions will indicate to use the following command to then run the module:
+```
+rain_table.run()
 ```
 
-or to run with Python3
-
+Alternatively, you can do this in one line from the standard terminal with:
 ```
-python3 <path-to-repository>/run_rain_table.py --python3
+python -c "import rain_table; rain_table.run()"
 ```
 
+Alternatively, run the module with provided script (this is the hook used for launching from SedEdu):
+```
+python3 <path-to-installation>run_rain_table.py
+```
 
-## The list of the files
+Please [open an issue](https://github.com/sededu/rain_table/issues) if you encounter any additional error messages! 
+Please include 1) operating system, 2) installation method, and 3) copy-paste the error.
 
-(1) rain_table.py: This file contains the source code to run the rain table simulation. Simply run the model in python, and click the screen to drop rain on the screen. The rain will be routed on the landscape in accordance to the d8, steepest decent algorithm (see O’Callaghan and Mark, 1984).
 
-(2) dem.txt: this file contains the digital elevaiton model that is rendered on the screen. This DEM's source is the 1/3 arcsecond USGS DEM product. These watershesd drainge diredtly into the Columbia River in Washington state (LOC: Lat 47°10'03.8"N, Long 120°07'31.9"W). File is a ersi formatted ascii.
+#### Smaller Python installation options
+Note that if you do not want to install the complete Anaconda Python distribution you can install [Miniconda](https://conda.io/miniconda.html) (a smaller version of Anaconda), or you can install Python alone and use a package manager called pip to do the installation. 
+You can get [Python and pip together here](https://www.python.org/downloads/).
 
-(3) dir.txt: this file contains the d8 flow direction data. File is a ersi formatted ascii.
 
-(4) area.txt: this file contains the drainage area data. File is a ersi formatted ascii.
 
-(5) aerial.png: this is the aerial photograph of the drainage basin
-
-Current user defined parameters in rain_table.py:
-scale -> this parameter scales the original dem grid (pixel length by pixel width) to window that is [(pixel length x scale) by (pixel width x scale)]
-
-rad -> this parameter controls the pixel radius of the rain cloud
-
-f_rate -> this parameter controls the frame rate of the simulation. It is set to 60 as the default because most computer screens' refresh rates are 60 Hz.
-
-alpha -> this parameters controls the transparency of the rain cloud.
-
-## References
-
-O’Callaghan, J. F. and Mark, D. M.: The extraction of drainage networks from digital elevation data, Computer Vision, Graphics, and Image Processing, 28(3), 323–344, doi:10.1016/S0734-189X(84)80011-0, 1984.
