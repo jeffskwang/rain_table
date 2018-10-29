@@ -24,10 +24,7 @@ These watersheds drain directly into the Columbia River in Washington state, (La
 
 ## Installing the module
 
-
-
 This module depends on Python 3, `tkinter`, and the Python packages `numpy`, and `matplotlib`. 
-
 
 
 ### Installing Python 3
