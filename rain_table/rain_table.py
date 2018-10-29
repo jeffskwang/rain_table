@@ -15,12 +15,12 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-import events
-import utils
 from PIL import Image
 
-import widgets
-from slider_manager import SliderManager, MiniManager, Val
+from . import events
+from . import utils
+from . import widgets
+from .slider_manager import SliderManager, MiniManager, Val
 
 class GUI(object):
 
