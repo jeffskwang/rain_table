@@ -540,8 +540,8 @@ class TightCheckButtons(AxesWidget):
                         horizontalalignment='left',
                         verticalalignment='center')
 
-            w, h = dy / 2, dy * 0.8
-            x, y = 0.05, y - h / 2
+            w, h = dy / 2, dy * 0.75
+            x, y = 0.1, y - h / 2
 
             p = Rectangle(xy=(x, y), width=w, height=h, edgecolor='black',
                           facecolor=axcolor, transform=ax.transAxes)

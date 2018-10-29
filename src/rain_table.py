@@ -168,9 +168,11 @@ class Map(object):
 
         #hydrograph gauge location
         self.hydro_y, self.hydro_x = np.unravel_index(self.AREA.argmax(), self.AREA.shape)
-        self.hydro_m = 1812 # (np.transpose(self.AREA)[self.hydro_x][self.hydro_y]) # self.AREA[self.hydro_y, self.hydro_x]
-        self.hydro_f = 1/600 # hydrograph scaling factor to convert mm/hr per pixel to m3/s
+        self.hydro_m = 1812 
+        self.hydro_f = 1/600 # hydrograph scaling factor to convert mm/hr per pixel to m3/s (not used)
         self.hydro_nqw = 1000
+        self.hydro_t_min = -240
+        self.hydro_t = np.linspace(self.hydro_t_min, 0, self.hydro_nqw)
         self.qw = np.repeat(0.0001, self.hydro_nqw)
 
         #setup direction array
@@ -197,11 +199,11 @@ class Map(object):
 
         # hydrograph plot artists
         
-        self.bfull_line = self.graph_ax.plot([-self.hydro_nqw, self.hydro_nqw*0.1], [1, 1], ls='--', color='k')
-        self.bfull_text = self.graph_ax.text(-self.hydro_nqw*0.9, 1.1, 'bankfull discharge')
-        self.hydrograph, = self.graph_ax.plot(np.linspace(-self.hydro_nqw, 0, self.hydro_nqw), self.qw)
+        self.bfull_line = self.graph_ax.plot([self.hydro_t_min, -self.hydro_t_min*0.1], [1, 1], ls='--', color='k')
+        self.bfull_text = self.graph_ax.text(self.hydro_t_min*0.95, 1.1, 'bankfull discharge')
+        self.hydrograph, = self.graph_ax.plot(self.hydro_t, self.qw)
         self.graph_ax.set_ylim(0, 3)
-        self.graph_ax.set_xlim(-self.hydro_nqw, self.hydro_nqw*0.1)
+        self.graph_ax.set_xlim(self.hydro_t_min, -self.hydro_t_min*0.1)
 
         # prefill flow array with equilib
         # self.AREA_old[np.transpose(self.AREA) >= self.baseflow_threshold ] = np.transpose(self.AREA[(self.AREA) >= self.baseflow_threshold ])  
