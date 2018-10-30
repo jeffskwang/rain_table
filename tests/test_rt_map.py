@@ -9,7 +9,7 @@ import matplotlib
 
 
 
-@pytest.mark.mpl_image_compare(baseline_dir='figs_baseline')
+@pytest.mark.mpl_image_compare(baseline_dir='figs_baseline', remove_text=True)
 def test_launch_fig_with_map():
 
     from rain_table.rain_table import GUI

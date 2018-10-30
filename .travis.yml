@@ -68,3 +68,8 @@ after_success:
     fi
   - python .ci/travis/anaconda_build_upload.py
   - python .ci/travis/pypi_build_upload.py
+
+after_failure:
+  deploy:
+  - provider: script
+    script: bash .ci/travis/ftp_artifacts.sh

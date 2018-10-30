@@ -9,7 +9,7 @@ import matplotlib
 
 
 
-@pytest.mark.mpl_image_compare(baseline_dir='figs_baseline')
+@pytest.mark.mpl_image_compare(baseline_dir='figs_baseline', remove_text=True)
 def test_launch_fig():
 
     from rain_table.rain_table import GUI
@@ -19,7 +19,7 @@ def test_launch_fig():
     return gui.fig
 
 
-@pytest.mark.mpl_image_compare(baseline_dir='figs_baseline')
+@pytest.mark.mpl_image_compare(baseline_dir='figs_baseline', remove_text=True)
 def test_line_into_map_ax():
 
     from rain_table.rain_table import GUI
@@ -31,7 +31,7 @@ def test_line_into_map_ax():
     return gui.fig
 
 
-@pytest.mark.mpl_image_compare(baseline_dir='figs_baseline')
+@pytest.mark.mpl_image_compare(baseline_dir='figs_baseline', remove_text=True)
 def test_change_baseflow_slider():
 
     from rain_table.rain_table import GUI
@@ -43,7 +43,7 @@ def test_change_baseflow_slider():
     return gui.fig
 
 
-@pytest.mark.mpl_image_compare(baseline_dir='figs_baseline')
+@pytest.mark.mpl_image_compare(baseline_dir='figs_baseline', remove_text=True)
 def test_change_cloud_slider():
 
     from rain_table.rain_table import GUI
@@ -55,7 +55,7 @@ def test_change_cloud_slider():
     return gui.fig
 
 
-@pytest.mark.mpl_image_compare(baseline_dir='figs_baseline')
+@pytest.mark.mpl_image_compare(baseline_dir='figs_baseline', remove_text=True)
 def test_change_transp_slider():
 
     from rain_table.rain_table import GUI
@@ -67,7 +67,7 @@ def test_change_transp_slider():
     return gui.fig
 
 
-@pytest.mark.mpl_image_compare(baseline_dir='figs_baseline')
+@pytest.mark.mpl_image_compare(baseline_dir='figs_baseline', remove_text=True)
 def test_change_chk():
 
     from rain_table.rain_table import GUI
