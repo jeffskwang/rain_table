@@ -1,17 +1,5 @@
-#python game
-#written by jeffrey kwang
-#email: jeffskwang@gmail.com
-#version = alpha_1
 
-############################
-###LIBRARIES###
-############################
-
-# import pygame
 import os
-# from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-# from matplotlib.figure import Figure
-# import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
