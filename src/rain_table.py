@@ -154,7 +154,7 @@ area_threshold_index = 18
 base_flow = 2539.
 
 #control tranparency of the aerial image
-transparency_int = 9
+transparency_int = 4
 transparency_list = np.linspace(0,255,9)
 
 #hydrograph gauge location
