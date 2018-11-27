@@ -13,6 +13,10 @@ import os
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
+from matplotlib.colors import LightSource
+ls = LightSource(azdeg=315, altdeg=15)
+import matplotlib
+cmap = matplotlib.cm.gray
 
 ############################
 ###PARAMETERS###
@@ -87,6 +91,27 @@ def plot_setup(plot_array,x,y,xlabel,ylabel,Q_max):
 
     return np.transpose(buf,(1, 0, 2))
 
+def plot_setup_DEM(DEM_array,DEM):
+    width_pixel,height_pixel = DEM_array.shape[0], DEM_array.shape[1]
+    fig = plt.figure(figsize=(float(width_pixel)/100.,float(height_pixel)/100.),dpi=100.)
+    ax = plt.axes([0,0,1,1])
+    rgb = ls.shade(DEM,cmap=cmap,blend_mode='soft',vert_exag=1,dx=1.,dy=1.)
+    im = ax.imshow(rgb,extent=[0,float(width_pixel),0,float(height_pixel)])
+    ax.set_aspect('equal')
+    ax.set_xlim(0,float(width_pixel))
+    ax.set_ylim(0,float(height_pixel))
+    plt.axis('off')
+    
+    canvas = FigureCanvas(fig)
+
+    canvas.draw()
+    
+    buf = fig.canvas.tostring_rgb()
+    ncols,nrows = fig.canvas.get_width_height()
+    buf = np.fromstring(buf, dtype=np.uint8).reshape(nrows, ncols, 3)
+
+    return np.transpose(buf,(1, 0, 2))
+
 ############################
 ###PYGAME###
 ############################
@@ -129,7 +154,7 @@ area_threshold_index = 18
 base_flow = 2539.
 
 #control tranparency of the aerial image
-transparency_int = 7
+transparency_int = 9
 transparency_list = np.linspace(0,255,9)
 
 #hydrograph gauge location
@@ -176,9 +201,7 @@ for x_temp in np.arange(0,res_width):
         coordinates[x_temp,y_temp,1] = y_temp * scale
 
 #DEM array
-DEM_array[:,:,0] = (np.transpose(DEM) - min_ele) / (max_ele - min_ele) * 255
-DEM_array[:,:,1] = (np.transpose(DEM) - min_ele) / (max_ele - min_ele) * 255
-DEM_array[:,:,2] = (np.transpose(DEM) - min_ele) / (max_ele - min_ele) * 255
+DEM_array = plot_setup_DEM(DEM_array,DEM)
 
 ############################
 ###MAIN LOOP###
