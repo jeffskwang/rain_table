@@ -76,7 +76,7 @@ def plot_setup(plot_array,x,y,xlabel,ylabel,Q_max):
     ax.set_ylim(0,Q_max)
     ax.plot(x,y,color='b')
         
-    fig.tight_layout()
+    fig.set_tight_layout(True)
     canvas = FigureCanvas(fig)
 
     canvas.draw()
